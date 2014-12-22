@@ -718,7 +718,7 @@ this.createjs = this.createjs || {};
 	 * An object containing any resources needed for audio playback, set by the plugin.
 	 * Only meant for use by advanced users.
 	 *
-	 * @method setPlayback
+	 * @method setPlaybackResource
 	 * @param {Object} value The new playback resource.
 	 * @return {AbstractSoundInstance} Returns reference to itself for chaining calls
 	 * @since 0.6.0
@@ -735,7 +735,7 @@ this.createjs = this.createjs || {};
 	 *
 	 * An object containing any resources needed for audio playback, usually set by the plugin.
 	 *
-	 * @method setPlayback
+	 * @method getPlaybackResource
 	 * @param {Object} value The new playback resource.
 	 * @return {Object} playback resource used for playing audio
 	 * @since 0.6.0

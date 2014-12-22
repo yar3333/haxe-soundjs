@@ -137,7 +137,7 @@ this.createjs = this.createjs || {};
 // public methods:
 	/**
 	 * Pre-register a sound for preloading and setup. This is called by {{#crossLink "Sound"}}{{/crossLink}}.
-	 * Note all plugins provide a <code>Loader</code> instance, which <a href="http://preloadjs.com" target="_blank">PreloadJS</a>
+	 * Note all plugins provide a <code>SoundLoader</code> instance, which <a href="http://preloadjs.com" target="_blank">PreloadJS</a>
 	 * can use to assist with preloading.
 	 * @method register
 	 * @param {String} loadItem An Object containing the source of the audio
@@ -160,7 +160,7 @@ this.createjs = this.createjs || {};
 	/**
 	 * Internally preload a sound.
 	 * @method preload
-	 * @param {Loader} loader The sound URI to load.
+	 * @param {SoundLoader} loader The sound URI to load.
 	 */
 	p.preload = function (loader) {
 		loader.on("error", createjs.proxy(this._handlePreloadError, this));
