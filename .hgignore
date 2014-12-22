@@ -1,0 +1,4 @@
+syntax: glob
+library/library.zip
+out
+test/bin

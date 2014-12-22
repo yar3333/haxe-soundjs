@@ -1,0 +1,11 @@
+{
+  "name": "soundjs",
+  "license": "LGPL",
+  "tags": ["html","html5","js"],
+  "description": "Haxe wrapper for CreateJS/SoundJS library. The aim of the project: auto-generate haxe classes from js to have a most recent SoundJS version.",
+  "contributors": ["yar3333"],
+  "releasenote": "Init.",
+  "version": "0.6.0",
+  "url": "https://bitbucket.org/yar3333/haxe-soundjs",
+  "dependencies": {}
+}
