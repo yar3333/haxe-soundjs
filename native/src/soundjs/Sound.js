@@ -329,6 +329,7 @@ this.createjs = this.createjs || {};
 	 * @type {Array[String]}
 	 * @default ["mp3", "ogg", "mpeg", "wav", "m4a", "mp4", "aiff", "wma", "mid"]
 	 * @since 0.4.0
+	 * @static
 	 */
 	s.SUPPORTED_EXTENSIONS = ["mp3", "ogg", "mpeg", "wav", "m4a", "mp4", "aiff", "wma", "mid"];
 
@@ -342,6 +343,7 @@ this.createjs = this.createjs || {};
 	 * @type {Object}
 	 * @since 0.4.0
 	 * @default {m4a:"mp4"}
+	 * @static
 	 */
 	s.EXTENSION_MAP = {
 		m4a:"mp4"
@@ -394,6 +396,7 @@ this.createjs = this.createjs || {};
 	 *
 	 * @property alternateExtensions
 	 * @type {Array}
+	 * @static
 	 * @since 0.5.2
 	 */
 	s.alternateExtensions = [];
@@ -581,6 +584,7 @@ this.createjs = this.createjs || {};
 	 * @param event
 	 * @protected
 	 * @since 0.6.0
+	 * @static
 	 */
 	s._handleLoadError = function(event) {
 		var src = event.target.getItem().src;
@@ -655,6 +659,7 @@ this.createjs = this.createjs || {};
 	 * @method initializeDefaultPlugins
 	 * @returns {Boolean} True if a plugin was initialized, false otherwise.
 	 * @since 0.4.0
+	 * @static
 	 */
 	s.initializeDefaultPlugins = function () {
 		if (s.activePlugin != null) {return true;}
@@ -911,6 +916,7 @@ this.createjs = this.createjs || {};
 	 * Also, it will return true for any values when the source is already loaded.
 	 * @since 0.4.0
 	 * @depreacted
+	 * @static
  	 */
 	s.registerManifest = function(manifest, basePath) {
 		try {
@@ -1063,6 +1069,7 @@ this.createjs = this.createjs || {};
 	 * @param {String} src The src or id that is being loaded.
 	 * @return {Boolean} If the src is already loaded.
 	 * @since 0.4.0
+	 * @static
 	 */
 	s.loadComplete = function (src) {
 		if (!s.isReady()) { return false; }
@@ -1083,6 +1090,7 @@ this.createjs = this.createjs || {};
 	 * @return {Object} A formatted object that can be registered with the {{#crossLink "Sound/activePlugin:property"}}{{/crossLink}}
 	 * and returned to a preloader like <a href="http://preloadjs.com" target="_blank">PreloadJS</a>.
 	 * @protected
+	 * @static
 	 */
 	s._parsePath = function (value) {
 		if (typeof(value) != "string") {value = value.toString();}
@@ -1193,6 +1201,7 @@ this.createjs = this.createjs || {};
 	 * @return {AbstractSoundInstance} A {{#crossLink "AbstractSoundInstance"}}{{/crossLink}} that can be controlled after it is created.
 	 * Unsupported extensions will return the default AbstractSoundInstance.
 	 * @since 0.4.0
+	 * @static
 	 */
 	s.createInstance = function (src, startTime, duration) {
 		if (!s.initializeDefaultPlugins()) {return new createjs.DefaultSoundInstance(src, startTime, duration);}
