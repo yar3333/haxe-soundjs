@@ -217,7 +217,7 @@ extern class Sound
 	 * More details on file formats can be found at <a href="http://en.wikipedia.org/wiki/Audio_file_format" target="_blank">http://en.wikipedia.org/wiki/Audio_file_format</a>.<br />
 	 * A very detailed list of file formats can be found at <a href="http://www.fileinfo.com/filetypes/audio" target="_blank">http://www.fileinfo.com/filetypes/audio</a>.
 	 */
-	var SUPPORTED_EXTENSIONS : Array<String>;
+	static var SUPPORTED_EXTENSIONS : Array<String>;
 	/**
 	 * Some extensions use another type of extension support to play (one of them is a codex).  This allows you to map
 	 * that support so plugins can accurately determine if an extension is supported.  Adding to this list can help
@@ -225,7 +225,7 @@ extern class Sound
 	 * 
 	 * A useful list of extensions for each format can be found at <a href="http://html5doctor.com/html5-audio-the-state-of-play/" target="_blank">http://html5doctor.com/html5-audio-the-state-of-play/</a>.
 	 */
-	var EXTENSION_MAP : Dynamic;
+	static var EXTENSION_MAP : Dynamic;
 	/**
 	 * Determines the default behavior for interrupting other currently playing instances with the same source, if the
 	 * maximum number of instances of the sound are already playing.  Currently the default is {{#crossLink "Sound/INTERRUPT_NONE:property"}}{{/crossLink}}
@@ -253,7 +253,7 @@ extern class Sound
 	 * 	// ...
 	 * 	createjs.Sound.play("myPath/mySound.ogg"); // works regardless of what extension is supported.  Note calling with ID is a better approach
 	 */
-	var alternateExtensions : Array<Dynamic>;
+	static var alternateExtensions : Array<Dynamic>;
 	/**
 	 * The currently active plugin. If this is null, then no plugin could be initialized. If no plugin was specified,
 	 * Sound attempts to apply the default plugins: {{#crossLink "WebAudioPlugin"}}{{/crossLink}}, followed by
@@ -279,7 +279,7 @@ extern class Sound
 	 * 
 	 * 	if (!createjs.initializeDefaultPlugins()) { return; }
 	 */
-	function initializeDefaultPlugins() : Bool;
+	static function initializeDefaultPlugins() : Bool;
 	/**
 	 * Determines if Sound has been initialized, and a plugin has been activated.
 	 * 
@@ -354,7 +354,7 @@ extern class Sound
 	/**
 	 * Deprecated.  Please use {{#crossLink "Sound/registerSounds"}}{{/crossLink} instead.
 	 */
-	function registerManifest(sounds:Array<Dynamic>, basePath:String) : Dynamic;
+	static function registerManifest(sounds:Array<Dynamic>, basePath:String) : Dynamic;
 	/**
 	 * Remove a sound that has been registered with {{#crossLink "Sound/registerSound"}}{{/crossLink}} or
 	 * {{#crossLink "Sound/registerSounds"}}{{/crossLink}}.
@@ -404,7 +404,7 @@ extern class Sound
 	 *         createjs.Sound.play(mySound);
 	 *     }
 	 */
-	function loadComplete(src:String) : Bool;
+	static function loadComplete(src:String) : Bool;
 	/**
 	 * Play a sound and get a {{#crossLink "AbstractSoundInstance"}}{{/crossLink}} to control. If the sound fails to play, a
 	 * AbstractSoundInstance will still be returned, and have a playState of {{#crossLink "Sound/PLAY_FAILED:property"}}{{/crossLink}}.
@@ -447,7 +447,7 @@ extern class Sound
 	 * NOTE to create an audio sprite that has not already been registered, both startTime and duration need to be set.
 	 * This is only when creating a new audio sprite, not when playing using the id of an already registered audio sprite.
 	 */
-	function createInstance(src:String, ?startTime:Float, ?duration:Float) : AbstractSoundInstance;
+	static function createInstance(src:String, ?startTime:Float, ?duration:Float) : AbstractSoundInstance;
 	/**
 	 * Set the master volume of Sound. The master volume is multiplied against each sound's individual volume.  For
 	 * example, if master volume is 0.5 and a sound's volume is 0.5, the resulting volume is 0.25. To set individual
@@ -513,7 +513,7 @@ extern class Sound
 	 *         // Click happened.
 	 *      }
 	 */
-	function addEventListener(type:String, listener:Dynamic, ?useCapture:Bool) : Dynamic;
+	static function addEventListener(type:String, listener:Dynamic, ?useCapture:Bool) : Dynamic;
 	/**
 	 * A shortcut method for using addEventListener that makes it easier to specify an execution scope, have a listener
 	 * only run once, associate arbitrary data with the listener, and remove the listener.
@@ -534,7 +534,7 @@ extern class Sound
 	 * 			}
 	 * 		}
 	 */
-	function on(type:String, listener:Dynamic, ?scope:Dynamic, ?once:Bool, ?data:Dynamic, ?useCapture:Bool) : Dynamic;
+	static function on(type:String, listener:Dynamic, ?scope:Dynamic, ?once:Bool, ?data:Dynamic, ?useCapture:Bool) : Dynamic;
 	/**
 	 * Removes the specified event listener.
 	 * 
@@ -546,12 +546,12 @@ extern class Sound
 	 * 
 	 *      displayObject.removeEventListener("click", handleClick);
 	 */
-	function removeEventListener(type:String, listener:Dynamic, ?useCapture:Bool) : Void;
+	static function removeEventListener(type:String, listener:Dynamic, ?useCapture:Bool) : Void;
 	/**
 	 * A shortcut to the removeEventListener method, with the same parameters and return value. This is a companion to the
 	 * .on method.
 	 */
-	function off(type:String, listener:Dynamic, ?useCapture:Bool) : Void;
+	static function off(type:String, listener:Dynamic, ?useCapture:Bool) : Void;
 	/**
 	 * Removes all listeners for the specified type, or all listeners of all types.
 	 * 
@@ -563,7 +563,7 @@ extern class Sound
 	 *      // Remove all click listeners
 	 *      displayObject.removeAllEventListeners("click");
 	 */
-	function removeAllEventListeners(?type:String) : Void;
+	static function removeAllEventListeners(?type:String) : Void;
 	/**
 	 * Dispatches the specified event to all listeners.
 	 * 
@@ -576,11 +576,11 @@ extern class Sound
 	 *      var event = new createjs.Event("progress");
 	 *      this.dispatchEvent(event);
 	 */
-	function dispatchEvent(eventObj:Dynamic) : Bool;
+	static function dispatchEvent(eventObj:Dynamic) : Bool;
 	/**
 	 * Indicates whether there is at least one listener for the specified event type.
 	 */
-	function hasEventListener(type:String) : Bool;
+	static function hasEventListener(type:String) : Bool;
 	/**
 	 * Indicates whether there is at least one listener for the specified event type on this object or any of its
 	 * ancestors (parent, parent's parent, etc). A return value of true indicates that if a bubbling event of the
@@ -589,17 +589,17 @@ extern class Sound
 	 * This is similar to {{#crossLink "EventDispatcher/hasEventListener"}}{{/crossLink}}, but it searches the entire
 	 * event flow for a listener, not just this object.
 	 */
-	function willTrigger(type:String) : Bool;
+	static function willTrigger(type:String) : Bool;
 	function toString() : String;
 
 	/**
 	 * This event is fired when a file finishes loading internally. This event is fired for each loaded sound,
 	 * so any handler methods should look up the <code>event.src</code> to handle a particular sound.
 	 */
-	inline function addFileloadEventListener(handler:SoundFileloadEvent->Void) : Dynamic return addEventListener("fileload", handler);
+	static inline function addFileloadEventListener(handler:SoundFileloadEvent->Void) : Dynamic return addEventListener("fileload", handler);
 	/**
 	 * This event is fired when a file fails loading internally. This event is fired for each loaded sound,
 	 * so any handler methods should look up the <code>event.src</code> to handle a particular sound.
 	 */
-	inline function addFileerrorEventListener(handler:SoundFileerrorEvent->Void) : Dynamic return addEventListener("fileerror", handler);
+	static inline function addFileerrorEventListener(handler:SoundFileerrorEvent->Void) : Dynamic return addEventListener("fileerror", handler);
 }
