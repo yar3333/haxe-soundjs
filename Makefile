@@ -19,6 +19,13 @@ OPTIONS+= --type-map AudioGainNode-js.html.audio.AudioGain
 OPTIONS+= --type-map AudioPannerNode-js.html.audio.PannerNode
 OPTIONS+= --type-map RegExp-Dynamic
 
+OPTIONS+= --specify-type Sound.play.interrupt-String
+OPTIONS+= --specify-type Sound.play.delay-Int
+OPTIONS+= --specify-type Sound.play.offset-Int
+OPTIONS+= --specify-type Sound.play.loop-Int
+OPTIONS+= --specify-type Sound.play.startTime-Int
+OPTIONS+= --specify-type Sound.play.duration-Int
+
 convert:
 	yuidoc -p -o out native/src
 	haxelib run yuidoc2haxe $(OPTIONS) library
