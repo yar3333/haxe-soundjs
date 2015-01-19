@@ -1,4 +1,4 @@
-package soundjs;
+package createjs;
 
 /**
  * Play sounds using a Flash instance. This plugin is not used by default, and must be registered manually in
@@ -24,7 +24,6 @@ package soundjs;
  * <ul><li> There can be a delay in flash player starting playback of audio.  This has been most noticeable in Firefox.
  * Unfortunely this is an issue with the flash player and the browser and therefore cannot be addressed by SoundJS.</li></ul>
  */
-@:native("createjs.FlashAudioPlugin")
 extern class FlashAudioPlugin extends AbstractPlugin
 {
 	/**

@@ -1,4 +1,4 @@
-package soundjs;
+package createjs;
 
 /**
  * Play sounds using HTML &lt;audio&gt; tags in the browser. This plugin is the second priority plugin installed
@@ -48,7 +48,6 @@ package soundjs;
  * 
  * See {{#crossLink "Sound"}}{{/crossLink}} for general notes on known issues.
  */
-@:native("createjs.HTMLAudioPlugin")
 extern class HTMLAudioPlugin extends AbstractPlugin
 {
 	/**

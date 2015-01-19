@@ -1,6 +1,7 @@
 OPTIONS+= -src out/data.json
 OPTIONS+= --remove-path-prefix native/src
 OPTIONS+= --native-package createjs
+OPTIONS+= --apply-native-package
 
 OPTIONS+= -ifile soundjs/version.js
 OPTIONS+= -ifile soundjs/flashaudio/FlashAudioSoundInstance.js

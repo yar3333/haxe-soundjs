@@ -1,4 +1,4 @@
-package preloadjs;
+package createjs;
 
 typedef AbstractLoaderLoadstartEvent =
 {
@@ -39,7 +39,6 @@ typedef AbstractLoaderInitializeEvent =
  * The base loader, which defines all the generic methods, properties, and events. All loaders extend this class,
  * including the {{#crossLink "LoadQueue"}}{{/crossLink}}.
  */
-@:native("createjs.AbstractLoader")
 extern class AbstractLoader extends createjs.EventDispatcher
 {
 	/**

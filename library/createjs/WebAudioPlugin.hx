@@ -1,4 +1,4 @@
-package soundjs;
+package createjs;
 
 /**
  * Play sounds using Web Audio in the browser. The WebAudioPlugin is currently the default plugin, and will be used
@@ -21,7 +21,6 @@ package soundjs;
  * 	by ensuring the audio and video audio share the same sampleRate.</li>
  * </ul>
  */
-@:native("createjs.WebAudioPlugin")
 extern class WebAudioPlugin extends AbstractPlugin
 {
 	/**

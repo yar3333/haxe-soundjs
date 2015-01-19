@@ -1,9 +1,8 @@
-package preloadjs;
+package createjs;
 
 /**
  * A createjs {{#crossLink "Event"}}{{/crossLink}} that is dispatched when progress changes.
  */
-@:native("createjs.ProgressEvent")
 extern class ProgressEvent
 {
 	/**

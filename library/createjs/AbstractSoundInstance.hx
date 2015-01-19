@@ -1,4 +1,4 @@
-package soundjs;
+package createjs;
 
 typedef AbstractSoundInstanceSucceededEvent =
 {
@@ -61,7 +61,6 @@ typedef AbstractSoundInstanceCompleteEvent =
  *      myInstance.on("loop", handleLoop);
  *      myInstance.on("failed", handleFailed);
  */
-@:native("createjs.AbstractSoundInstance")
 extern class AbstractSoundInstance extends createjs.EventDispatcher
 {
 	/**

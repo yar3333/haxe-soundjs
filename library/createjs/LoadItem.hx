@@ -1,4 +1,4 @@
-package preloadjs;
+package createjs;
 
 /**
  * All loaders accept an item containing the properties defined in this class. If a raw object is passed instead,
@@ -6,7 +6,6 @@ package preloadjs;
  * string path or HTML tag is also acceptable, but it will be automatically converted to a LoadItem using the
  * {{#crossLink "create"}}{{/crossLink}} method by {{#crossLink "AbstractLoader"}}{{/crossLink}}
  */
-@:native("createjs.LoadItem")
 extern class LoadItem
 {
 	/**

@@ -1,4 +1,4 @@
-package soundjs;
+package createjs;
 
 /**
  * WebAudioSoundInstance extends the base api of {{#crossLink "AbstractSoundInstance"}}{{/crossLink}} and is used by
@@ -6,7 +6,6 @@ package soundjs;
  * 
  * WebAudioSoundInstance exposes audioNodes for advanced users.
  */
-@:native("createjs.WebAudioSoundInstance")
 extern class WebAudioSoundInstance extends AbstractSoundInstance
 {
 	/**

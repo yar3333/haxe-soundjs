@@ -1,9 +1,8 @@
-package soundjs;
+package createjs;
 
 /**
  * A default plugin class used as a base for all other plugins.
  */
-@:native("createjs.AbstractPlugin")
 extern class AbstractPlugin
 {
 	function new() : Void;
@@ -21,7 +20,7 @@ extern class AbstractPlugin
 	/**
 	 * Internally preload a sound.
 	 */
-	function preload(loader:preloadjs.SoundLoader) : Void;
+	function preload(loader:SoundLoader) : Void;
 	/**
 	 * Checks if preloading has started for a specific source. If the source is found, we can assume it is loading,
 	 * or has already finished loading.

@@ -1,9 +1,8 @@
-package preloadjs;
+package createjs;
 
 /**
  * Utilities that assist with parsing load items, and determining file types, etc.
  */
-@:native("createjs.RequestUtils")
 extern class RequestUtils
 {
 	/**

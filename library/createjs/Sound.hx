@@ -1,4 +1,4 @@
-package soundjs;
+package createjs;
 
 typedef SoundFileloadEvent =
 {
@@ -163,7 +163,6 @@ typedef SoundFileerrorEvent =
  * <li>We can only play audio inside a user event (touch/click).  This currently means you cannot loop sound or use
  * a delay.</li></ul>
  */
-@:native("createjs.Sound")
 extern class Sound
 {
 	/**

@@ -1,4 +1,4 @@
-package preloadjs;
+package createjs;
 
 /**
  * A preloader that loads items using XHR requests, usually XMLHttpRequest. However XDomainRequests will be used
@@ -7,7 +7,6 @@ package preloadjs;
  * can be canceled during load. Note that XHR is not supported in IE 6 or earlier, and is not recommended for
  * cross-domain loading.
  */
-@:native("createjs.XHRRequest")
 extern class XHRRequest extends AbstractLoader
 {
 	function new(item:Dynamic) : Void;

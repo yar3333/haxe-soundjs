@@ -3,7 +3,6 @@ package createjs;
 /**
  * A general error {{#crossLink "Event"}}{{/crossLink}}, that describes an error that occurred, as well as any details.
  */
-@:native("createjs.ErrorEvent")
 extern class ErrorEvent
 {
 	/**
