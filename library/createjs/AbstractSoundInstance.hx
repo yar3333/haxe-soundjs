@@ -61,7 +61,7 @@ typedef AbstractSoundInstanceCompleteEvent =
  *      myInstance.on("loop", handleLoop);
  *      myInstance.on("failed", handleFailed);
  */
-extern class AbstractSoundInstance extends createjs.EventDispatcher
+extern class AbstractSoundInstance extends EventDispatcher
 {
 	/**
 	 * The source of the sound.
@@ -322,25 +322,30 @@ extern class AbstractSoundInstance extends createjs.EventDispatcher
 	/**
 	 * The event that is fired when playback has started successfully.
 	 */
-	inline function addSucceededEventListener(handler:AbstractSoundInstanceSucceededEvent->Void) : Dynamic return addEventListener("succeeded", handler);
+	inline function addSucceededEventListener(handler:AbstractSoundInstanceSucceededEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("succeeded", handler, useCapture);
+	inline function removeSucceededEventListener(handler:AbstractSoundInstanceSucceededEvent->Void, ?useCapture:Bool) : Void removeEventListener("succeeded", handler, useCapture);
 	/**
 	 * The event that is fired when playback is interrupted. This happens when another sound with the same
 	 * src property is played using an interrupt value that causes this instance to stop playing.
 	 */
-	inline function addInterruptedEventListener(handler:AbstractSoundInstanceInterruptedEvent->Void) : Dynamic return addEventListener("interrupted", handler);
+	inline function addInterruptedEventListener(handler:AbstractSoundInstanceInterruptedEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("interrupted", handler, useCapture);
+	inline function removeInterruptedEventListener(handler:AbstractSoundInstanceInterruptedEvent->Void, ?useCapture:Bool) : Void removeEventListener("interrupted", handler, useCapture);
 	/**
 	 * The event that is fired when playback has failed. This happens when there are too many channels with the same
 	 * src property already playing (and the interrupt value doesn't cause an interrupt of another instance), or
 	 * the sound could not be played, perhaps due to a 404 error.
 	 */
-	inline function addFailedEventListener(handler:AbstractSoundInstanceFailedEvent->Void) : Dynamic return addEventListener("failed", handler);
+	inline function addFailedEventListener(handler:AbstractSoundInstanceFailedEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("failed", handler, useCapture);
+	inline function removeFailedEventListener(handler:AbstractSoundInstanceFailedEvent->Void, ?useCapture:Bool) : Void removeEventListener("failed", handler, useCapture);
 	/**
 	 * The event that is fired when a sound has completed playing but has loops remaining.
 	 */
-	inline function addLoopEventListener(handler:AbstractSoundInstanceLoopEvent->Void) : Dynamic return addEventListener("loop", handler);
+	inline function addLoopEventListener(handler:AbstractSoundInstanceLoopEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("loop", handler, useCapture);
+	inline function removeLoopEventListener(handler:AbstractSoundInstanceLoopEvent->Void, ?useCapture:Bool) : Void removeEventListener("loop", handler, useCapture);
 	/**
 	 * The event that is fired when playback completes. This means that the sound has finished playing in its
 	 * entirety, including its loop iterations.
 	 */
-	inline function addCompleteEventListener(handler:AbstractSoundInstanceCompleteEvent->Void) : Dynamic return addEventListener("complete", handler);
+	inline function addCompleteEventListener(handler:AbstractSoundInstanceCompleteEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("complete", handler, useCapture);
+	inline function removeCompleteEventListener(handler:AbstractSoundInstanceCompleteEvent->Void, ?useCapture:Bool) : Void removeEventListener("complete", handler, useCapture);
 }

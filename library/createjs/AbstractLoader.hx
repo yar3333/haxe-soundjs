@@ -39,7 +39,7 @@ typedef AbstractLoaderInitializeEvent =
  * The base loader, which defines all the generic methods, properties, and events. All loaders extend this class,
  * including the {{#crossLink "LoadQueue"}}{{/crossLink}}.
  */
-extern class AbstractLoader extends createjs.EventDispatcher
+extern class AbstractLoader extends EventDispatcher
 {
 	/**
 	 * If the loader has completed loading. This provides a quick check, but also ensures that the different approaches
@@ -206,36 +206,43 @@ extern class AbstractLoader extends createjs.EventDispatcher
 	 * The {{#crossLink "ProgressEvent"}}{{/crossLink}} that is fired when the overall progress changes. Prior to
 	 * version 0.6.0, this was just a regular {{#crossLink "Event"}}{{/crossLink}}.
 	 */
-	inline function addProgressEventListener(handler:Dynamic->Void) : Dynamic return addEventListener("progress", handler);
+	inline function addProgressEventListener(handler:Dynamic->Void, ?useCapture:Bool) : Dynamic return addEventListener("progress", handler, useCapture);
+	inline function removeProgressEventListener(handler:Dynamic->Void, ?useCapture:Bool) : Void removeEventListener("progress", handler, useCapture);
 	/**
 	 * The {{#crossLink "Event"}}{{/crossLink}} that is fired when a load starts.
 	 */
-	inline function addLoadstartEventListener(handler:AbstractLoaderLoadstartEvent->Void) : Dynamic return addEventListener("loadstart", handler);
+	inline function addLoadstartEventListener(handler:AbstractLoaderLoadstartEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("loadstart", handler, useCapture);
+	inline function removeLoadstartEventListener(handler:AbstractLoaderLoadstartEvent->Void, ?useCapture:Bool) : Void removeEventListener("loadstart", handler, useCapture);
 	/**
 	 * The {{#crossLink "Event"}}{{/crossLink}} that is fired when the entire queue has been loaded.
 	 */
-	inline function addCompleteEventListener(handler:AbstractLoaderCompleteEvent->Void) : Dynamic return addEventListener("complete", handler);
+	inline function addCompleteEventListener(handler:AbstractLoaderCompleteEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("complete", handler, useCapture);
+	inline function removeCompleteEventListener(handler:AbstractLoaderCompleteEvent->Void, ?useCapture:Bool) : Void removeEventListener("complete", handler, useCapture);
 	/**
 	 * The {{#crossLink "ErrorEvent"}}{{/crossLink}} that is fired when the loader encounters an error. If the error was
 	 * encountered by a file, the event will contain the item that caused the error. Prior to version 0.6.0, this was
 	 * just a regular {{#crossLink "Event"}}{{/crossLink}}.
 	 */
-	inline function addErrorEventListener(handler:Dynamic->Void) : Dynamic return addEventListener("error", handler);
+	inline function addErrorEventListener(handler:Dynamic->Void, ?useCapture:Bool) : Dynamic return addEventListener("error", handler, useCapture);
+	inline function removeErrorEventListener(handler:Dynamic->Void, ?useCapture:Bool) : Void removeEventListener("error", handler, useCapture);
 	/**
 	 * The {{#crossLink "Event"}}{{/crossLink}} that is fired when the loader encounters an internal file load error.
 	 * This enables loaders to maintain internal queues, and surface file load errors.
 	 */
-	inline function addFileerrorEventListener(handler:AbstractLoaderFileerrorEvent->Void) : Dynamic return addEventListener("fileerror", handler);
+	inline function addFileerrorEventListener(handler:AbstractLoaderFileerrorEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("fileerror", handler, useCapture);
+	inline function removeFileerrorEventListener(handler:AbstractLoaderFileerrorEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileerror", handler, useCapture);
 	/**
 	 * The {{#crossLink "Event"}}{{/crossLink}} that is fired when a loader internally loads a file. This enables
 	 * loaders such as {{#crossLink "ManifestLoader"}}{{/crossLink}} to maintain internal {{#crossLink "LoadQueue"}}{{/crossLink}}s
 	 * and notify when they have loaded a file. The {{#crossLink "LoadQueue"}}{{/crossLink}} class dispatches a
 	 * slightly different {{#crossLink "LoadQueue/fileload:event"}}{{/crossLink}} event.
 	 */
-	inline function addFileloadEventListener(handler:AbstractLoaderFileloadEvent->Void) : Dynamic return addEventListener("fileload", handler);
+	inline function addFileloadEventListener(handler:AbstractLoaderFileloadEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("fileload", handler, useCapture);
+	inline function removeFileloadEventListener(handler:AbstractLoaderFileloadEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileload", handler, useCapture);
 	/**
 	 * The {{#crossLink "Event"}}{{/crossLink}} that is fired after the internal request is created, but before a load.
 	 * This allows updates to the loader for specific loading needs, such as binary or XHR image loading.
 	 */
-	inline function addInitializeEventListener(handler:AbstractLoaderInitializeEvent->Void) : Dynamic return addEventListener("initialize", handler);
+	inline function addInitializeEventListener(handler:AbstractLoaderInitializeEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("initialize", handler, useCapture);
+	inline function removeInitializeEventListener(handler:AbstractLoaderInitializeEvent->Void, ?useCapture:Bool) : Void removeEventListener("initialize", handler, useCapture);
 }
