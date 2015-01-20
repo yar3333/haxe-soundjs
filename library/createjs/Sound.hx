@@ -332,7 +332,7 @@ extern class Sound
 	 *      createjs.Sound.on("fileload", handleLoad); // add an event listener for when load is completed
 	 *      createjs.Sound.registerSound("myAudioPath/mySound.ogg", "myID", 3);
 	 */
-	static function registerSound(src:Dynamic, ?id:String, ?data:Dynamic, basePath:String) : Dynamic;
+	static function registerSound(src:Dynamic, ?id:String, ?data:Dynamic, ?basePath:String) : Dynamic;
 	/**
 	 * Register an array of audio files for loading and future playback in Sound. It is recommended to register all
 	 * sounds that need to be played back in order to properly prepare and preload them. Sound does internal preloading
