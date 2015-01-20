@@ -597,11 +597,11 @@ extern class Sound
 	 * so any handler methods should look up the <code>event.src</code> to handle a particular sound.
 	 */
 	static inline function addFileloadEventListener(handler:SoundFileloadEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("fileload", handler, useCapture);
-	inline function removeFileloadEventListener(handler:SoundFileloadEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileload", handler, useCapture);
+	static inline function removeFileloadEventListener(handler:SoundFileloadEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileload", handler, useCapture);
 	/**
 	 * This event is fired when a file fails loading internally. This event is fired for each loaded sound,
 	 * so any handler methods should look up the <code>event.src</code> to handle a particular sound.
 	 */
 	static inline function addFileerrorEventListener(handler:SoundFileerrorEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("fileerror", handler, useCapture);
-	inline function removeFileerrorEventListener(handler:SoundFileerrorEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileerror", handler, useCapture);
+	static inline function removeFileerrorEventListener(handler:SoundFileerrorEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileerror", handler, useCapture);
 }

@@ -25,7 +25,7 @@
     <option noInlineOnDebug="False" />
     <option mainClass="Main" />
     <option enabledebug="True" />
-    <option additional="--macro include('createjs')&#xA;--macro include('soundjs')&#xA;--macro include('preloadjs')" />
+    <option additional="--macro include('createjs')" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
