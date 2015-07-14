@@ -15,7 +15,7 @@ OPTIONS+= -ifile createjs/utils/proxy.js
 
 OPTIONS+= --type-map AudioNode-js.html.audio.AudioNode
 OPTIONS+= --type-map AudioContext-js.html.audio.AudioContext
-OPTIONS+= --type-map AudioGainNode-js.html.audio.AudioGain
+OPTIONS+= --type-map AudioGainNode-js.html.audio.GainNode
 OPTIONS+= --type-map AudioPannerNode-js.html.audio.PannerNode
 OPTIONS+= --type-map RegExp-Dynamic
 

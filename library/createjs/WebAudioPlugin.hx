@@ -35,7 +35,7 @@ extern class WebAudioPlugin extends AbstractPlugin
 	 * 
 	 * Can be accessed by advanced users through createjs.Sound.activePlugin.gainNode.
 	 */
-	var gainNode : js.html.audio.AudioGain;
+	var gainNode : js.html.audio.GainNode;
 	/**
 	 * The web audio context, which WebAudio uses to play audio. All nodes that interact with the WebAudioPlugin
 	 * need to be created within this context.
