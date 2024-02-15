@@ -1,4 +1,6 @@
-package createjs;
+package soundjs;
+
+import soundjs.data.PlayPropsConfig;
 
 typedef SoundFileloadEvent =
 {
@@ -45,14 +47,15 @@ typedef SoundFileerrorEvent =
  * 
  * <h4>Example</h4>
  * 
+ *      createjs.FlashAudioPlugin.swfPath = "../src/soundjs/flashaudio";
  *      createjs.Sound.registerPlugins([createjs.WebAudioPlugin, createjs.FlashAudioPlugin]);
  *      createjs.Sound.alternateExtensions = ["mp3"];
- *      createjs.Sound.on("fileload", createjs.proxy(this.loadHandler, (this));
+ *      createjs.Sound.on("fileload", this.loadHandler, this);
  *      createjs.Sound.registerSound("path/to/mySound.ogg", "sound");
  *      function loadHandler(event) {
  *          // This is fired for each sound that is registered.
  *          var instance = createjs.Sound.play("sound");  // play using id.  Could also use full source path or event.src.
- *          instance.on("complete", createjs.proxy(this.handleComplete, this));
+ *          instance.on("complete", this.handleComplete, this);
  *          instance.volume = 0.5;
  *      }
  * 
@@ -65,37 +68,20 @@ typedef SoundFileerrorEvent =
  * 
  * Sound can be used as a plugin with PreloadJS to help preload audio properly. Audio preloaded with PreloadJS is
  * automatically registered with the Sound class. When audio is not preloaded, Sound will do an automatic internal
- * load. As a result, it may fail to play the first time play is called if the audio is not finished loading. Use the
- * {{#crossLink "Sound/fileload"}}{{/crossLink}} event to determine when a sound has finished internally preloading.
- * It is recommended that all audio is preloaded before it is played.
+ * load. As a result, it may fail to play the first time play is called if the audio is not finished loading. Use
+ * the {{#crossLink "Sound/fileload:event"}}{{/crossLink}} event to determine when a sound has finished internally
+ * preloading. It is recommended that all audio is preloaded before it is played.
  * 
  *      var queue = new createjs.LoadQueue();
  * 		queue.installPlugin(createjs.Sound);
  * 
  * <b>Audio Sprites</b><br />
- * SoundJS has added support for Audio Sprites, available as of version 0.6.0.
+ * SoundJS has added support for {{#crossLink "AudioSprite"}}{{/crossLink}}, available as of version 0.6.0.
  * For those unfamiliar with audio sprites, they are much like CSS sprites or sprite sheets: multiple audio assets
  * grouped into a single file.
  * 
- * Benefits of Audio Sprites
- * <ul><li>More robust support for older browsers and devices that only allow a single audio instance, such as iOS 5.</li>
- * <li>They provide a work around for the Internet Explorer 9 audio tag limit, which until now restricted how many
- * different sounds we could load at once.</li>
- * <li>Faster loading by only requiring a single network request for several sounds, especially on mobile devices
- * where the network round trip for each file can add significant latency.</li></ul>
- * 
- * Drawbacks of Audio Sprites
- * <ul><li>No guarantee of smooth looping when using HTML or Flash audio.  If you have a track that needs to loop
- * smoothly and you are supporting non-web audio browsers, do not use audio sprites for that sound if you can avoid it.</li>
- * <li>No guarantee that HTML audio will play back immediately, especially the first time. In some browsers (Chrome!),
- * HTML audio will only load enough to play through – so we rely on the “canplaythrough” event to determine if the audio is loaded.
- * Since audio sprites must jump ahead to play specific sounds, the audio may not yet have downloaded.</li>
- * <li>Audio sprites share the same core source, so if you have a sprite with 5 sounds and are limited to 2
- * concurrently playing instances, that means you can only play 2 of the sounds at the same time.</li></ul>
- * 
  * <h4>Example</h4>
  * 
- *      createjs.Sound.initializeDefaultPlugins();
  * 		var assetsPath = "./assets/";
  * 		var sounds = [{
  * 			src:"MyAudioSprite.ogg", data: {
@@ -104,7 +90,7 @@ typedef SoundFileerrorEvent =
  * 					{id:"sound2", startTime:1000, duration:400},
  * 					{id:"sound3", startTime:1700, duration: 1000}
  * 				]}
- * 				}
+ * 			}
  * 		];
  * 		createjs.Sound.alternateExtensions = ["mp3"];
  * 		createjs.Sound.on("fileload", loadSound);
@@ -112,26 +98,60 @@ typedef SoundFileerrorEvent =
  * 		// after load is complete
  * 		createjs.Sound.play("sound2");
  * 
- * You can also create audio sprites on the fly by setting the startTime and duration when creating an new AbstractSoundInstance.
+ * <b>Mobile Playback</b><br />
+ * Devices running iOS require the WebAudio context to be "unlocked" by playing at least one sound inside of a user-
+ * initiated event (such as touch/click). Earlier versions of SoundJS included a "MobileSafe" sample, but this is no
+ * longer necessary as of SoundJS 0.6.2.
+ * <ul>
+ *     <li>
+ *         In SoundJS 0.4.1 and above, you can either initialize plugins or use the {{#crossLink "WebAudioPlugin/playEmptySound"}}{{/crossLink}}
+ *         method in the call stack of a user input event to manually unlock the audio context.
+ *     </li>
+ *     <li>
+ *         In SoundJS 0.6.2 and above, SoundJS will automatically listen for the first document-level "mousedown"
+ *         and "touchend" event, and unlock WebAudio. This will continue to check these events until the WebAudio
+ *         context becomes "unlocked" (changes from "suspended" to "running")
+ *     </li>
+ *     <li>
+ *         Both the "mousedown" and "touchend" events can be used to unlock audio in iOS9+, the "touchstart" event
+ *         will work in iOS8 and below. The "touchend" event will only work in iOS9 when the gesture is interpreted
+ *         as a "click", so if the user long-presses the button, it will no longer work.
+ *     </li>
+ *     <li>
+ *         When using the <a href="http://www.createjs.com/docs/easeljs/classes/Touch.html">EaselJS Touch class</a>,
+ *         the "mousedown" event will not fire when a canvas is clicked, since MouseEvents are prevented, to ensure
+ *         only touch events fire. To get around this, you can either rely on "touchend", or:
+ *         <ol>
+ *             <li>Set the `allowDefault` property on the Touch class constructor to `true` (defaults to `false`).</li>
+ *             <li>Set the `preventSelection` property on the EaselJS `Stage` to `false`.</li>
+ *         </ol>
+ *         These settings may change how your application behaves, and are not recommended.
+ *     </li>
+ * </ul>
  * 
- * 		createjs.Sound.play("MyAudioSprite", {startTime: 1000, duration: 400});
+ * <b>Loading Alternate Paths and Extension-less Files</b><br />
+ * SoundJS supports loading alternate paths and extension-less files by passing an object instead of a string for
+ * the `src` property, which is a hash using the format `{extension:"path", extension2:"path2"}`. These labels are
+ * how SoundJS determines if the browser will support the sound. This also enables multiple formats to live in
+ * different folders, or on CDNs, which often has completely different filenames for each file.
  * 
- * <b>Mobile Safe Approach</b><br />
- * Mobile devices require sounds to be played inside of a user initiated event (touch/click) in varying degrees.
- * As of SoundJS 0.4.1, you can launch a site inside of a user initiated event and have audio playback work. To
- * enable as broadly as possible, the site needs to setup the Sound plugin in its initialization (for example via
- * <code>createjs.Sound.initializeDefaultPlugins();</code>), and all sounds need to be played in the scope of the
- * application.  See the MobileSafe demo for a working example.
+ * Priority is determined by the property order (first property is tried first).  This is supported by both internal loading
+ * and loading with PreloadJS.
+ * 
+ * <em>Note: an id is required for playback.</em>
  * 
  * <h4>Example</h4>
  * 
- *     document.getElementById("status").addEventListener("click", handleTouch, false);    // works on Android and iPad
- *     function handleTouch(event) {
- *         document.getElementById("status").removeEventListener("click", handleTouch, false);    // remove the listener
- *         var thisApp = new myNameSpace.MyApp();    // launch the app
- *     }
+ * 		var sounds = {path:"./audioPath/",
+ * 				manifest: [
+ * 				{id: "cool", src: {mp3:"mp3/awesome.mp3", ogg:"noExtensionOggFile"}}
+ * 		]};
  * 
- * <h4>Known Browser and OS issues</h4>
+ * 		createjs.Sound.alternateExtensions = ["mp3"];
+ * 		createjs.Sound.addEventListener("fileload", handleLoad);
+ * 		createjs.Sound.registerSounds(sounds);
+ * 
+ * <h3>Known Browser and OS issues</h3>
  * <b>IE 9 HTML Audio limitations</b><br />
  * <ul><li>There is a delay in applying volume changes to tags that occurs once playback is started. So if you have
  * muted all sounds, they will all play during this delay until the mute applies internally. This happens regardless of
@@ -140,29 +160,35 @@ typedef SoundFileerrorEvent =
  * encoding with 64kbps works.</li>
  * <li>Occasionally very short samples will get cut off.</li>
  * <li>There is a limit to how many audio tags you can load and play at once, which appears to be determined by
- * hardware and browser settings.  See {{#crossLink "HTMLAudioPlugin.MAX_INSTANCES"}}{{/crossLink}} for a safe estimate.</li></ul>
+ * hardware and browser settings.  See {{#crossLink "HTMLAudioPlugin.MAX_INSTANCES"}}{{/crossLink}} for a safe
+ * estimate.</li></ul>
  * 
  * <b>Firefox 25 Web Audio limitations</b>
  * <ul><li>mp3 audio files do not load properly on all windows machines, reported
  * <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=929969" target="_blank">here</a>. </br>
- * For this reason it is recommended to pass another FF supported type (ie ogg) first until this bug is resolved, if possible.</li></ul>
+ * For this reason it is recommended to pass another FF supported type (ie ogg) first until this bug is resolved, if
+ * possible.</li></ul>
  * 
  * <b>Safari limitations</b><br />
  * <ul><li>Safari requires Quicktime to be installed for audio playback.</li></ul>
  * 
  * <b>iOS 6 Web Audio limitations</b><br />
- * <ul><li>Sound is initially muted and will only unmute through play being called inside a user initiated event
- * (touch/click).</li>
- * <li>A bug exists that will distort un-cached web audio when a video element is present in the DOM that has audio at a different sampleRate.</li>
- * <li>Note HTMLAudioPlugin is not supported on iOS by default.  See {{#crossLink "HTMLAudioPlugin"}}{{/crossLink}}
- * for more details.</li>
+ * <ul><li>Sound is initially locked, and must be unlocked via a user-initiated event. Please see the section on
+ * Mobile Playback above.</li>
+ * <li>A bug exists that will distort un-cached web audio when a video element is present in the DOM that has audio
+ * at a different sampleRate.</li>
  * </ul>
  * 
  * <b>Android HTML Audio limitations</b><br />
  * <ul><li>We have no control over audio volume. Only the user can set volume on their device.</li>
  * <li>We can only play audio inside a user event (touch/click).  This currently means you cannot loop sound or use
  * a delay.</li></ul>
+ * 
+ * <b>Web Audio and PreloadJS</b><br />
+ * <ul><li>Web Audio must be loaded through XHR, therefore when used with PreloadJS, tag loading is not possible.
+ * This means that tag loading can not be used to avoid cross domain issues.</li><ul>
  */
+@:native('createjs.Sound')
 extern class Sound
 {
 	/**
@@ -259,6 +285,56 @@ extern class Sound
 	 * {{#crossLink "HTMLAudioPlugin"}}{{/crossLink}}.
 	 */
 	static var activePlugin : Dynamic;
+	/**
+	 * Set the master volume of Sound. The master volume is multiplied against each sound's individual volume.  For
+	 * example, if master volume is 0.5 and a sound's volume is 0.5, the resulting volume is 0.25. To set individual
+	 * sound volume, use AbstractSoundInstance {{#crossLink "AbstractSoundInstance/volume:property"}}{{/crossLink}}
+	 * instead.
+	 * 
+	 * <h4>Example</h4>
+	 * 
+	 *     createjs.Sound.volume = 0.5;
+	 */
+	var volume : Float;
+	/**
+	 * Mute/Unmute all audio. Note that muted audio still plays at 0 volume. This global mute value is maintained
+	 * separately and when set will override, but not change the mute property of individual instances. To mute an individual
+	 * instance, use AbstractSoundInstance {{#crossLink "AbstractSoundInstance/muted:property"}}{{/crossLink}} instead.
+	 * 
+	 * <h4>Example</h4>
+	 * 
+	 *     createjs.Sound.muted = true;
+	 */
+	var muted : Bool;
+	/**
+	 * Get the active plugins capabilities, which help determine if a plugin can be used in the current environment,
+	 * or if the plugin supports a specific feature. Capabilities include:
+	 * <ul>
+	 *     <li><b>panning:</b> If the plugin can pan audio from left to right</li>
+	 *     <li><b>volume;</b> If the plugin can control audio volume.</li>
+	 *     <li><b>tracks:</b> The maximum number of audio tracks that can be played back at a time. This will be -1
+	 *     if there is no known limit.</li>
+	 * <br />An entry for each file type in {{#crossLink "Sound/SUPPORTED_EXTENSIONS:property"}}{{/crossLink}}:
+	 *     <li><b>mp3:</b> If MP3 audio is supported.</li>
+	 *     <li><b>ogg:</b> If OGG audio is supported.</li>
+	 *     <li><b>wav:</b> If WAV audio is supported.</li>
+	 *     <li><b>mpeg:</b> If MPEG audio is supported.</li>
+	 *     <li><b>m4a:</b> If M4A audio is supported.</li>
+	 *     <li><b>mp4:</b> If MP4 audio is supported.</li>
+	 *     <li><b>aiff:</b> If aiff audio is supported.</li>
+	 *     <li><b>wma:</b> If wma audio is supported.</li>
+	 *     <li><b>mid:</b> If mid audio is supported.</li>
+	 * </ul>
+	 * 
+	 * You can get a specific capability of the active plugin using standard object notation
+	 * 
+	 * <h4>Example</h4>
+	 * 
+	 *      var mp3 = createjs.Sound.capabilities.mp3;
+	 * 
+	 * Note this property is read only.
+	 */
+	static var capabilities : Dynamic;
 
 	/**
 	 * Register a list of Sound plugins, in order of precedence. To register a single plugin, pass a single element in the array.
@@ -292,36 +368,6 @@ extern class Sound
 	 */
 	static function isReady() : Bool;
 	/**
-	 * Get the active plugins capabilities, which help determine if a plugin can be used in the current environment,
-	 * or if the plugin supports a specific feature. Capabilities include:
-	 * <ul>
-	 *     <li><b>panning:</b> If the plugin can pan audio from left to right</li>
-	 *     <li><b>volume;</b> If the plugin can control audio volume.</li>
-	 *     <li><b>tracks:</b> The maximum number of audio tracks that can be played back at a time. This will be -1
-	 *     if there is no known limit.</li>
-	 * <br />An entry for each file type in {{#crossLink "Sound/SUPPORTED_EXTENSIONS:property"}}{{/crossLink}}:
-	 *     <li><b>mp3:</b> If MP3 audio is supported.</li>
-	 *     <li><b>ogg:</b> If OGG audio is supported.</li>
-	 *     <li><b>wav:</b> If WAV audio is supported.</li>
-	 *     <li><b>mpeg:</b> If MPEG audio is supported.</li>
-	 *     <li><b>m4a:</b> If M4A audio is supported.</li>
-	 *     <li><b>mp4:</b> If MP4 audio is supported.</li>
-	 *     <li><b>aiff:</b> If aiff audio is supported.</li>
-	 *     <li><b>wma:</b> If wma audio is supported.</li>
-	 *     <li><b>mid:</b> If mid audio is supported.</li>
-	 * </ul>
-	 */
-	static function getCapabilities() : Dynamic;
-	/**
-	 * Get a specific capability of the active plugin. See {{#crossLink "Sound/getCapabilities"}}{{/crossLink}} for a
-	 * full list of capabilities.
-	 * 
-	 * <h4>Example</h4>
-	 * 
-	 *      var maxAudioInstances = createjs.Sound.getCapability("tracks");
-	 */
-	static function getCapability(key:String) : Dynamic;
-	/**
 	 * Register an audio file for loading and future playback in Sound. This is automatically called when using
 	 * <a href="http://preloadjs.com" target="_blank">PreloadJS</a>.  It is recommended to register all sounds that
 	 * need to be played back in order to properly prepare and preload them. Sound does internal preloading when required.
@@ -331,8 +377,9 @@ extern class Sound
 	 *      createjs.Sound.alternateExtensions = ["mp3"];
 	 *      createjs.Sound.on("fileload", handleLoad); // add an event listener for when load is completed
 	 *      createjs.Sound.registerSound("myAudioPath/mySound.ogg", "myID", 3);
+	 *      createjs.Sound.registerSound({ogg:"path1/mySound.ogg", mp3:"path2/mySoundNoExtension"}, "myID", 3);
 	 */
-	static function registerSound(src:Dynamic, ?id:String, ?data:Dynamic, ?basePath:String) : Dynamic;
+	static function registerSound(src:Dynamic, ?id:String, ?data:Dynamic, basePath:String, ?defaultPlayProps:Dynamic) : Dynamic;
 	/**
 	 * Register an array of audio files for loading and future playback in Sound. It is recommended to register all
 	 * sounds that need to be played back in order to properly prepare and preload them. Sound does internal preloading
@@ -340,20 +387,18 @@ extern class Sound
 	 * 
 	 * <h4>Example</h4>
 	 * 
+	 * 		var assetPath = "./myAudioPath/";
 	 *      var sounds = [
 	 *          {src:"asset0.ogg", id:"example"},
 	 *          {src:"asset1.ogg", id:"1", data:6},
 	 *          {src:"asset2.mp3", id:"works"}
+	 *          {src:{mp3:"path1/asset3.mp3", ogg:"path2/asset3NoExtension"}, id:"better"}
 	 *      ];
 	 *      createjs.Sound.alternateExtensions = ["mp3"];	// if the passed extension is not supported, try this extension
 	 *      createjs.Sound.on("fileload", handleLoad); // call handleLoad when each sound loads
 	 *      createjs.Sound.registerSounds(sounds, assetPath);
 	 */
 	static function registerSounds(sounds:Array<Dynamic>, basePath:String) : Dynamic;
-	/**
-	 * Deprecated.  Please use {{#crossLink "Sound/registerSounds"}}{{/crossLink} instead.
-	 */
-	static function registerManifest(sounds:Array<Dynamic>, basePath:String) : Dynamic;
 	/**
 	 * Remove a sound that has been registered with {{#crossLink "Sound/registerSound"}}{{/crossLink}} or
 	 * {{#crossLink "Sound/registerSounds"}}{{/crossLink}}.
@@ -362,8 +407,10 @@ extern class Sound
 	 * 
 	 * <h4>Example</h4>
 	 * 
-	 *      createjs.Sound.removeSound("myAudioBasePath/mySound.ogg");
 	 *      createjs.Sound.removeSound("myID");
+	 *      createjs.Sound.removeSound("myAudioBasePath/mySound.ogg");
+	 *      createjs.Sound.removeSound("myPath/myOtherSound.mp3", "myBasePath/");
+	 *      createjs.Sound.removeSound({mp3:"musicNoExtension", ogg:"music.ogg"}, "myBasePath/");
 	 */
 	static function removeSound(src:Dynamic, basePath:String) : Bool;
 	/**
@@ -374,6 +421,7 @@ extern class Sound
 	 * 
 	 * <h4>Example</h4>
 	 * 
+	 * 		assetPath = "./myPath/";
 	 *      var sounds = [
 	 *          {src:"asset0.ogg", id:"example"},
 	 *          {src:"asset1.ogg", id:"1", data:6},
@@ -405,11 +453,12 @@ extern class Sound
 	 */
 	static function loadComplete(src:String) : Bool;
 	/**
-	 * Play a sound and get a {{#crossLink "AbstractSoundInstance"}}{{/crossLink}} to control. If the sound fails to play, a
-	 * AbstractSoundInstance will still be returned, and have a playState of {{#crossLink "Sound/PLAY_FAILED:property"}}{{/crossLink}}.
-	 * Note that even on sounds with failed playback, you may still be able to call AbstractSoundInstance {{#crossLink "AbstractSoundInstance/play"}}{{/crossLink}},
-	 * since the failure could be due to lack of available channels. If the src does not have a supported extension or
-	 * if there is no available plugin, a default AbstractSoundInstance will be returned which will not play any audio, but will not generate errors.
+	 * Play a sound and get a {{#crossLink "AbstractSoundInstance"}}{{/crossLink}} to control. If the sound fails to
+	 * play, an AbstractSoundInstance will still be returned, and have a playState of {{#crossLink "Sound/PLAY_FAILED:property"}}{{/crossLink}}.
+	 * Note that even on sounds with failed playback, you may still be able to call the {{#crossLink "AbstractSoundInstance/play"}}{{/crossLink}},
+	 * method, since the failure could be due to lack of available channels. If the src does not have a supported
+	 * extension or if there is no available plugin, a default AbstractSoundInstance will still be returned, which will
+	 * not play any audio, but will not generate errors.
 	 * 
 	 * <h4>Example</h4>
 	 * 
@@ -417,17 +466,14 @@ extern class Sound
 	 *      createjs.Sound.registerSound("myAudioPath/mySound.mp3", "myID", 3);
 	 *      function handleLoad(event) {
 	 *      	createjs.Sound.play("myID");
-	 *      	// we can pass in options we want to set inside of an object, and store off AbstractSoundInstance for controlling
+	 *      	// store off AbstractSoundInstance for controlling
 	 *      	var myInstance = createjs.Sound.play("myID", {interrupt: createjs.Sound.INTERRUPT_ANY, loop:-1});
-	 *      	// alternately, we can pass full source path and specify each argument individually
-	 *      	var myInstance = createjs.Sound.play("myAudioPath/mySound.mp3", createjs.Sound.INTERRUPT_ANY, 0, 0, -1, 1, 0);
 	 *      }
 	 * 
-	 * NOTE to create an audio sprite that has not already been registered, both startTime and duration need to be set.
+	 * NOTE: To create an audio sprite that has not already been registered, both startTime and duration need to be set.
 	 * This is only when creating a new audio sprite, not when playing using the id of an already registered audio sprite.
 	 */
-	@:overload(function(src:String, options:SoundOptions) : AbstractSoundInstance {})
-	static function play(src:String, ?interrupt:String, ?delay:Int, ?offset:Int, ?loop:Int, ?volume:Float, ?pan:Float, ?startTime:Int, ?duration:Int) : AbstractSoundInstance;
+	static function play(src:String, props:Dynamic) : AbstractSoundInstance;
 	/**
 	 * Creates a {{#crossLink "AbstractSoundInstance"}}{{/crossLink}} using the passed in src. If the src does not have a
 	 * supported extension or if there is no available plugin, a default AbstractSoundInstance will be returned that can be
@@ -449,44 +495,6 @@ extern class Sound
 	 */
 	static function createInstance(src:String, ?startTime:Float, ?duration:Float) : AbstractSoundInstance;
 	/**
-	 * Set the master volume of Sound. The master volume is multiplied against each sound's individual volume.  For
-	 * example, if master volume is 0.5 and a sound's volume is 0.5, the resulting volume is 0.25. To set individual
-	 * sound volume, use AbstractSoundInstance {{#crossLink "AbstractSoundInstance/setVolume"}}{{/crossLink}} instead.
-	 * 
-	 * <h4>Example</h4>
-	 * 
-	 *     createjs.Sound.setVolume(0.5);
-	 */
-	static function setVolume(value:Float) : Void;
-	/**
-	 * Get the master volume of Sound. The master volume is multiplied against each sound's individual volume.
-	 * To get individual sound volume, use AbstractSoundInstance {{#crossLink "AbstractSoundInstance/volume:property"}}{{/crossLink}} instead.
-	 * 
-	 * <h4>Example</h4>
-	 * 
-	 *     var masterVolume = createjs.Sound.getVolume();
-	 */
-	static function getVolume() : Float;
-	/**
-	 * Mute/Unmute all audio. Note that muted audio still plays at 0 volume. This global mute value is maintained
-	 * separately and when set will override, but not change the mute property of individual instances. To mute an individual
-	 * instance, use AbstractSoundInstance {{#crossLink "AbstractSoundInstance/setMute"}}{{/crossLink}} instead.
-	 * 
-	 * <h4>Example</h4>
-	 * 
-	 *     createjs.Sound.setMute(true);
-	 */
-	static function setMute(value:Bool) : Bool;
-	/**
-	 * Returns the global mute value. To get the mute value of an individual instance, use AbstractSoundInstance
-	 * {{#crossLink "AbstractSoundInstance/getMute"}}{{/crossLink}} instead.
-	 * 
-	 * <h4>Example</h4>
-	 * 
-	 *     var muted = createjs.Sound.getMute();
-	 */
-	static function getMute() : Bool;
-	/**
 	 * Stop all audio (global stop). Stopped audio is reset, and not paused. To play audio that has been stopped,
 	 * call AbstractSoundInstance {{#crossLink "AbstractSoundInstance/play"}}{{/crossLink}}.
 	 * 
@@ -495,6 +503,16 @@ extern class Sound
 	 *     createjs.Sound.stop();
 	 */
 	static function stop() : Void;
+	/**
+	 * Set the default playback properties for all new SoundInstances of the passed in src or ID.
+	 * See {{#crossLink "PlayPropsConfig"}}{{/crossLink}} for available properties.
+	 */
+	function setDefaultPlayProps(src:String, playProps:Dynamic) : Void;
+	/**
+	 * Get the default playback properties for the passed in src or ID.  These properties are applied to all
+	 * new SoundInstances.  Returns null if default does not exist.
+	 */
+	function getDefaultPlayProps(src:String) : PlayPropsConfig;
 	/**
 	 * Static initializer to mix EventDispatcher methods into a target object or prototype.
 	 * 
@@ -519,7 +537,11 @@ extern class Sound
 	 * only run once, associate arbitrary data with the listener, and remove the listener.
 	 * 
 	 * This method works by creating an anonymous wrapper function and subscribing it with addEventListener.
-	 * The created anonymous function is returned for use with .removeEventListener (or .off).
+	 * The wrapper function is returned for use with `removeEventListener` (or `off`).
+	 * 
+	 * <b>IMPORTANT:</b> To remove a listener added with `on`, you must pass in the returned wrapper function as the listener, or use
+	 * {{#crossLink "Event/remove"}}{{/crossLink}}. Likewise, each time you call `on` a NEW wrapper function is subscribed, so multiple calls
+	 * to `on` with the same params will create multiple listeners.
 	 * 
 	 * <h4>Example</h4>
 	 * 
@@ -550,6 +572,9 @@ extern class Sound
 	/**
 	 * A shortcut to the removeEventListener method, with the same parameters and return value. This is a companion to the
 	 * .on method.
+	 * 
+	 * <b>IMPORTANT:</b> To remove a listener added with `on`, you must pass in the returned wrapper function as the listener. See 
+	 * {{#crossLink "EventDispatcher/on"}}{{/crossLink}} for an example.
 	 */
 	static function off(type:String, listener:Dynamic, ?useCapture:Bool) : Void;
 	/**
@@ -576,7 +601,7 @@ extern class Sound
 	 *      var event = new createjs.Event("progress");
 	 *      this.dispatchEvent(event);
 	 */
-	static function dispatchEvent(eventObj:Dynamic) : Bool;
+	static function dispatchEvent(eventObj:Dynamic, ?bubbles:Bool, ?cancelable:Bool) : Bool;
 	/**
 	 * Indicates whether there is at least one listener for the specified event type.
 	 */

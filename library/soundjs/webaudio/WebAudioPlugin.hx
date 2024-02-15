@@ -1,4 +1,4 @@
-package createjs;
+package soundjs.webaudio;
 
 /**
  * Play sounds using Web Audio in the browser. The WebAudioPlugin is currently the default plugin, and will be used
@@ -7,20 +7,32 @@ package createjs;
  * 
  * <h4>Known Browser and OS issues for Web Audio</h4>
  * <b>Firefox 25</b>
- * <ul><li>mp3 audio files do not load properly on all windows machines, reported
- * <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=929969" target="_blank">here</a>. </br>
- * For this reason it is recommended to pass another FF supported type (ie ogg) first until this bug is resolved, if possible.</li></ul>
- * <br />
+ * <li>
+ *     mp3 audio files do not load properly on all windows machines, reported <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=929969" target="_blank">here</a>.
+ *     <br />For this reason it is recommended to pass another FireFox-supported type (i.e. ogg) as the default
+ *     extension, until this bug is resolved
+ * </li>
+ * 
  * <b>Webkit (Chrome and Safari)</b>
- * <ul><li>AudioNode.disconnect does not always seem to work.  This can cause the file size to grow over time if you
- * are playing a lot of audio files.</li></ul>
- * <br />
+ * <li>
+ *     AudioNode.disconnect does not always seem to work.  This can cause the file size to grow over time if you
+ * 	   are playing a lot of audio files.
+ * </li>
+ * 
  * <b>iOS 6 limitations</b>
- * 	<ul><li>Sound is initially muted and will only unmute through play being called inside a user initiated event (touch/click).</li>
- * 	<li>A bug exists that will distort uncached audio when a video element is present in the DOM.  You can avoid this bug
- * 	by ensuring the audio and video audio share the same sampleRate.</li>
+ * <ul>
+ *     <li>
+ *         Sound is initially muted and will only unmute through play being called inside a user initiated event
+ *         (touch/click). Please read the mobile playback notes in the the {{#crossLink "Sound"}}{{/crossLink}}
+ *         class for a full overview of the limitations, and how to get around them.
+ *     </li>
+ * 	   <li>
+ * 	       A bug exists that will distort un-cached audio when a video element is present in the DOM. You can avoid
+ * 	       this bug by ensuring the audio and video audio share the same sample rate.
+ * 	   </li>
  * </ul>
  */
+@:native('createjs.WebAudioPlugin')
 extern class WebAudioPlugin extends AbstractPlugin
 {
 	/**
@@ -44,6 +56,10 @@ extern class WebAudioPlugin extends AbstractPlugin
 	 * {{#crossLink "Sound/registerPlugins"}}{{/crossLink}} or {{#crossLink "Sound/initializeDefaultPlugins"}}{{/crossLink}}.
 	 */
 	static var context : js.html.audio.AudioContext;
+	/**
+	 * The default sample rate used when checking for iOS compatibility. See {{#crossLink "WebAudioPlugin/_createAudioContext"}}{{/crossLink}}.
+	 */
+	static var DEFAULT_SAMPLE_REATE : Float;
 
 	function new() : Void;
 

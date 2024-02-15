@@ -7,5 +7,7 @@
   "releasenote": "* minor",
   "version": "0.6.3",
   "url": "https://github.com/yar3333/haxe-soundjs",
-  "dependencies": {}
+  "dependencies": { 
+    "preloadjs":""
+  }
 }

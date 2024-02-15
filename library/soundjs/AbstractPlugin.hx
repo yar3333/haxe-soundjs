@@ -1,8 +1,11 @@
-package createjs;
+package soundjs;
+
+import preloadjs.loaders.AbstractLoader;
 
 /**
  * A default plugin class used as a base for all other plugins.
  */
+@:native('createjs.AbstractPlugin')
 extern class AbstractPlugin
 {
 	function new() : Void;
@@ -13,14 +16,14 @@ extern class AbstractPlugin
 	static function isSupported() : Bool;
 	/**
 	 * Pre-register a sound for preloading and setup. This is called by {{#crossLink "Sound"}}{{/crossLink}}.
-	 * Note all plugins provide a <code>SoundLoader</code> instance, which <a href="http://preloadjs.com" target="_blank">PreloadJS</a>
+	 * Note all plugins provide a <code>Loader</code> instance, which <a href="http://preloadjs.com" target="_blank">PreloadJS</a>
 	 * can use to assist with preloading.
 	 */
-	function register(loadItem:String, instances:Float) : Dynamic;
+	function register(loadItem:String) : Dynamic;
 	/**
 	 * Internally preload a sound.
 	 */
-	function preload(loader:SoundLoader) : Void;
+	function preload(loader:AbstractLoader) : Void;
 	/**
 	 * Checks if preloading has started for a specific source. If the source is found, we can assume it is loading,
 	 * or has already finished loading.

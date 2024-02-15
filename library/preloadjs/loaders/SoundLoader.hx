@@ -1,4 +1,4 @@
-package createjs;
+package preloadjs.loaders;
 
 /**
  * A loader for HTML audio files. PreloadJS can not load WebAudio files, as a WebAudio context is required, which
@@ -6,13 +6,14 @@ package createjs;
  * external framework that handles audio playback. To load content that can be played by WebAudio, use the
  * {{#crossLink "BinaryLoader"}}{{/crossLink}}, and handle the audio context decoding manually.
  */
-extern class SoundLoader
+@:native('createjs.SoundLoader')
+extern class SoundLoader extends AbstractMediaLoader
 {
 	function new(loadItem:Dynamic, preferXHR:Bool) : Void;
 
 	/**
 	 * Determines if the loader can load a specific item. This loader can only load items that are of type
-	 * {{#crossLink "AbstractLoader/SOUND:property"}}{{/crossLink}}.
+	 * {{#crossLink "Types/SOUND:property"}}{{/crossLink}}.
 	 */
 	static function canLoadItem(item:Dynamic) : Bool;
 }

@@ -1,5 +1,8 @@
 --js test/bin/index.js
 --class-path library
 --class-path test/src
+--library preloadjs
 --macro include('createjs')
+--macro include('preloadjs')
+--macro include('soundjs')
 --main Main

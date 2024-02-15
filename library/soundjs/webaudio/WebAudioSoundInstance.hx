@@ -1,4 +1,6 @@
-package createjs;
+package soundjs.webaudio;
+
+import js.html.audio.AudioBufferSourceNode;
 
 /**
  * WebAudioSoundInstance extends the base api of {{#crossLink "AbstractSoundInstance"}}{{/crossLink}} and is used by
@@ -6,6 +8,7 @@ package createjs;
  * 
  * WebAudioSoundInstance exposes audioNodes for advanced users.
  */
+@:native('createjs.WebAudioSoundInstance')
 extern class WebAudioSoundInstance extends AbstractSoundInstance
 {
 	/**
@@ -28,6 +31,12 @@ extern class WebAudioSoundInstance extends AbstractSoundInstance
 	 * <br />Audio context used to create nodes.  This is and needs to be the same context used by {{#crossLink "WebAudioPlugin"}}{{/crossLink}}.
 	 */
 	static var context : js.html.audio.AudioContext;
+	/**
+	 * Note this is only intended for use by advanced users.
+	 * <br />The scratch buffer that will be assigned to the buffer property of a source node on close.  
+	 * This is and should be the same scratch buffer referenced by {{#crossLink "WebAudioPlugin"}}{{/crossLink}}.
+	 */
+	static var _scratchBuffer : AudioBufferSourceNode;
 	/**
 	 * Note this is only intended for use by advanced users.
 	 * <br /> Audio node from WebAudioPlugin that sequences to <code>context.destination</code>
