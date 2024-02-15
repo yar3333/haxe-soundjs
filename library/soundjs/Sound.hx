@@ -473,7 +473,7 @@ extern class Sound
 	 * NOTE: To create an audio sprite that has not already been registered, both startTime and duration need to be set.
 	 * This is only when creating a new audio sprite, not when playing using the id of an already registered audio sprite.
 	 */
-	static function play(src:String, props:Dynamic) : AbstractSoundInstance;
+	static function play(src:String, ?props:Dynamic) : AbstractSoundInstance;
 	/**
 	 * Creates a {{#crossLink "AbstractSoundInstance"}}{{/crossLink}} using the passed in src. If the src does not have a
 	 * supported extension or if there is no available plugin, a default AbstractSoundInstance will be returned that can be

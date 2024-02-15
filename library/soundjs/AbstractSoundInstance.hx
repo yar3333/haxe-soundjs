@@ -138,7 +138,7 @@ extern class AbstractSoundInstance extends EventDispatcher
 	 * <b>Parameters Deprecated</b><br />
 	 * The parameters for this method are deprecated in favor of a single parameter that is an Object or {{#crossLink "PlayPropsConfig"}}{{/crossLink}}.
 	 */
-	function play(props:Dynamic) : AbstractSoundInstance;
+	function play(?props:Dynamic) : AbstractSoundInstance;
 	/**
 	 * Stop playback of the instance. Stopped sounds will reset their position to 0, and calls to {{#crossLink "AbstractSoundInstance/resume"}}{{/crossLink}}
 	 * will fail. To start playback again, call {{#crossLink "AbstractSoundInstance/play"}}{{/crossLink}}.
