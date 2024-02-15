@@ -49,7 +49,8 @@ this.createjs = this.createjs || {};
 	function LoadItem() {
 		/**
 		 * The source of the file that is being loaded. This property is <b>required</b>. The source can either be a
-		 * string (recommended), or an HTML tag.</li>
+		 * string (recommended), or an HTML tag.
+		 * This can also be an object, but in that case it has to include a type and be handled by a plugin.
 		 * @property src
 		 * @type {String}
 		 * @default null
@@ -57,9 +58,8 @@ this.createjs = this.createjs || {};
 		this.src = null;
 
 		/**
-		 * The source of the file that is being loaded. This property is <strong>required</strong>. The source can
-		 * either be a string (recommended), or an HTML tag. See the {{#crossLink "AbstractLoader"}}{{/crossLink}}
-		 * class for the full list of supported types.
+		 * The type file that is being loaded. The type of the file is usually inferred by the extension, but can also
+		 * be set manually. This is helpful in cases where a file does not have an extension.
 		 * @property type
 		 * @type {String}
 		 * @default null
@@ -104,14 +104,14 @@ this.createjs = this.createjs || {};
 		this.data = null;
 
 		/**
-		 * The request method used for HTTP calls. Both {{#crossLink "AbstractLoader/GET:property"}}{{/crossLink}} or
-		 * {{#crossLink "AbstractLoader/POST:property"}}{{/crossLink}} request types are supported, and are defined as
+		 * The request method used for HTTP calls. Both {{#crossLink "Methods/GET:property"}}{{/crossLink}} or
+		 * {{#crossLink "Methods/POST:property"}}{{/crossLink}} request types are supported, and are defined as
 		 * constants on {{#crossLink "AbstractLoader"}}{{/crossLink}}.
 		 * @property method
 		 * @type {String}
-		 * @default get
+		 * @default GET
 		 */
-		this.method = createjs.LoadItem.GET;
+		this.method = createjs.Methods.GET;
 
 		/**
 		 * An object hash of name/value pairs to send to the server.
@@ -154,7 +154,7 @@ this.createjs = this.createjs || {};
 		 * @type {boolean}
 		 * @default Anonymous
 		 */
-		this.crossOrigin = "Anonymous";
+		this.crossOrigin = null;
 
 		/**
 		 * The duration in milliseconds to wait before a request times out. This only applies to tag-based and and XHR
@@ -163,22 +163,31 @@ this.createjs = this.createjs || {};
 		 * @type {Number}
 		 * @default 8000 (8 seconds)
 		 */
-		this.loadTimeout = 8000;
+		this.loadTimeout = s.LOAD_TIMEOUT_DEFAULT;
 	};
 
 	var p = LoadItem.prototype = {};
 	var s = LoadItem;
 
 	/**
-	 * Create/validate a LoadItem.
+	 * Default duration in milliseconds to wait before a request times out. This only applies to tag-based and and XHR
+	 * (level one) loading, as XHR (level 2) provides its own timeout event.
+	 * @property LOAD_TIMEOUT_DEFAULT
+	 * @type {number}
+	 * @static
+	 */
+	s.LOAD_TIMEOUT_DEFAULT = 8000;
+
+	/**
+	 * Create a LoadItem.
 	 * <ul>
 	 *     <li>String-based items are converted to a LoadItem with a populated {{#crossLink "src:property"}}{{/crossLink}}.</li>
 	 *     <li>LoadItem instances are returned as-is</li>
-	 *     <li>Objectss are returned as-is</li>
+	 *     <li>Objects are returned with any needed properties added</li>
 	 * </ul>
 	 * @method create
 	 * @param {LoadItem|String|Object} value The load item value
-	 * @returns {Object|LoadItem}
+	 * @returns {LoadItem|Object}
 	 * @static
 	 */
 	s.create = function (value) {
@@ -188,8 +197,10 @@ this.createjs = this.createjs || {};
 			return item;
 		} else if (value instanceof s) {
 			return value;
-		} else if (value instanceof Object) { // Don't modify object, allows users to attach random data to the item.
-			// TODO: Disallow objects with no src?
+		} else if (value instanceof Object && value.src) {
+			if (value.loadTimeout == null) {
+				value.loadTimeout = s.LOAD_TIMEOUT_DEFAULT;
+			}
 			return value;
 		} else {
 			throw new Error("Type not recognized.");

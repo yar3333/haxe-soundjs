@@ -81,6 +81,15 @@ this.createjs = this.createjs || {};
 		this._soundInstances = {};
 
 		/**
+		 * The internal master volume value of the plugin.
+		 * @property _volume
+		 * @type {Number}
+		 * @default 1
+		 * @protected
+		 */
+		this._volume = 1;
+
+		/**
 		 * A reference to a loader class used by a plugin that must be set.
 		 * @type {Object}
 		 * @protected
@@ -96,29 +105,14 @@ this.createjs = this.createjs || {};
 	};
 	var p = AbstractPlugin.prototype;
 
-	/**
-	 * <strong>REMOVED</strong>. Removed in favor of using `MySuperClass_constructor`.
-	 * See {{#crossLink "Utility Methods/extend"}}{{/crossLink}} and {{#crossLink "Utility Methods/promote"}}{{/crossLink}}
-	 * for details.
-	 *
-	 * There is an inheritance tutorial distributed with EaselJS in /tutorials/Inheritance.
-	 *
-	 * @method initialize
-	 * @protected
-	 * @deprecated
-	 */
-	// p.initialize = function() {}; // searchable for devs wondering where it is.
-
-
 // Static Properties:
 // NOTE THESE PROPERTIES NEED TO BE ADDED TO EACH PLUGIN
 	/**
-	 * The capabilities of the plugin. This is generated via the {{#crossLink "WebAudioPlugin/_generateCapabilities:method"}}{{/crossLink}}
-	 * method and is used internally.
+	 * The capabilities of the plugin. This is generated via the _generateCapabilities method and is used internally.
 	 * @property _capabilities
 	 * @type {Object}
 	 * @default null
-	 * @protected
+	 * @private
 	 * @static
 	 */
 	AbstractPlugin._capabilities = null;
@@ -137,21 +131,21 @@ this.createjs = this.createjs || {};
 // public methods:
 	/**
 	 * Pre-register a sound for preloading and setup. This is called by {{#crossLink "Sound"}}{{/crossLink}}.
-	 * Note all plugins provide a <code>SoundLoader</code> instance, which <a href="http://preloadjs.com" target="_blank">PreloadJS</a>
+	 * Note all plugins provide a <code>Loader</code> instance, which <a href="http://preloadjs.com" target="_blank">PreloadJS</a>
 	 * can use to assist with preloading.
 	 * @method register
 	 * @param {String} loadItem An Object containing the source of the audio
-	 * @param {Number} instances The number of concurrently playing instances to allow for the channel at any time.
 	 * Note that not every plugin will manage this value.
 	 * @return {Object} A result object, containing a "tag" for preloading purposes.
 	 */
-	p.register = function (loadItem, instances) {
+	p.register = function (loadItem) {
+		var loader = this._loaders[loadItem.src];
+		if(loader && !loader.canceled) {return this._loaders[loadItem.src];}	// already loading/loaded this, so don't load twice
+		// OJR potential issue that we won't be firing loaded event, might need to trigger if this is already loaded?
 		this._audioSources[loadItem.src] = true;
 		this._soundInstances[loadItem.src] = [];
-		if(this._loaders[loadItem.src]) {return this._loaders[loadItem.src];}	// already loading/loaded this, so don't load twice
-		// OJR potential issue that we won't be firing loaded event, might need to trigger if this is already loaded?
-		var loader = new this._loaderClass(loadItem);
-		loader.on("complete", createjs.proxy(this._handlePreloadComplete, this));
+		loader = new this._loaderClass(loadItem);
+		loader.on("complete", this._handlePreloadComplete, this);
 		this._loaders[loadItem.src] = loader;
 		return loader;
 	};
@@ -160,10 +154,10 @@ this.createjs = this.createjs || {};
 	/**
 	 * Internally preload a sound.
 	 * @method preload
-	 * @param {SoundLoader} loader The sound URI to load.
+	 * @param {Loader} loader The sound URI to load.
 	 */
 	p.preload = function (loader) {
-		loader.on("error", createjs.proxy(this._handlePreloadError, this));
+		loader.on("error", this._handlePreloadError, this);
 		loader.load();
 	};
 
@@ -229,12 +223,18 @@ this.createjs = this.createjs || {};
 			this.preload(this.register(src));
 		}
 		var si = new this._soundInstanceClass(src, startTime, duration, this._audioSources[src]);
-		this._soundInstances[src].push(si);
+		if(this._soundInstances[src]){
+			this._soundInstances[src].push(si);
+		}
+
+		// Plugins that don't have a setVolume should implement a setMasterVolune/setMasterMute
+		// So we have to check that here.
+		si.setMasterVolume && si.setMasterVolume(createjs.Sound.volume);
+		si.setMasterMute && si.setMasterMute(createjs.Sound.muted);
+
 		return si;
 	};
 
-	// TODO Volume & mute Getter / Setter??
-	// TODO change calls to return nothing or this for chaining??
 	// if a plugin does not support volume and mute, it should set these to null
 	/**
 	 * Set the master volume of the plugin, which affects all SoundInstances.
@@ -262,7 +262,7 @@ this.createjs = this.createjs || {};
 	 * Mute all sounds via the plugin.
 	 * @method setMute
 	 * @param {Boolean} value If all sound should be muted or not. Note that plugin-level muting just looks up
-	 * the mute value of Sound {{#crossLink "Sound/getMute"}}{{/crossLink}}, so this property is not used here.
+	 * the mute value of Sound {{#crossLink "Sound/muted:property"}}{{/crossLink}}, so this property is not used here.
 	 * @return {Boolean} If the mute call succeeds.
 	 */
 	p.setMute = function (value) {
@@ -280,6 +280,7 @@ this.createjs = this.createjs || {};
 	/**
 	 * Handles internal preload completion.
 	 * @method _handlePreloadComplete
+	 * @param event
 	 * @protected
 	 */
 	p._handlePreloadComplete = function (event) {
@@ -287,13 +288,14 @@ this.createjs = this.createjs || {};
 		this._audioSources[src] = event.result;
 		for (var i = 0, l = this._soundInstances[src].length; i < l; i++) {
 			var item = this._soundInstances[src][i];
-			item.setPlaybackResource(this._audioSources[src]);
+			item.playbackResource = this._audioSources[src];
 			// ToDo consider adding play call here if playstate == playfailed
+			this._soundInstances[src] = null;
 		}
 	};
 
 	/**
-	 * Handles internal preload erros
+	 * Handles internal preload errors
 	 * @method _handlePreloadError
 	 * @param event
 	 * @protected

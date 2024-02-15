@@ -81,35 +81,30 @@ this.createjs = this.createjs || {};
 		 */
 		this._addedToDOM = false;
 
-		/**
-		 * Determines what the tags initial style.visibility was, so we can set it correctly after a load.
-		 *
-		 * @type {null}
-		 * @private
-		 */
-		this._startTagVisibility = null;
 	};
 
 	var p = createjs.extend(TagRequest, createjs.AbstractRequest);
 
 	// public methods
 	p.load = function () {
-		if (this._tag.parentNode == null) {
-			window.document.body.appendChild(this._tag);
-			this._addedToDOM = true;
-		}
-
 		this._tag.onload = createjs.proxy(this._handleTagComplete, this);
 		this._tag.onreadystatechange = createjs.proxy(this._handleReadyStateChange, this);
+		this._tag.onerror = createjs.proxy(this._handleError, this);
 
 		var evt = new createjs.Event("initialize");
 		evt.loader = this._tag;
 
 		this.dispatchEvent(evt);
 
-		this._hideTag();
+		this._loadTimeout = setTimeout(createjs.proxy(this._handleTimeout, this), this._item.loadTimeout);
 
 		this._tag[this._tagSrcAttribute] = this._item.src;
+
+		// wdg:: Append the tag AFTER setting the src, or SVG loading on iOS will fail.
+		if (this._tag.parentNode == null) {
+			createjs.DomUtils.appendToBody(this._tag);
+			this._addedToDOM = true;
+		}
 	};
 
 	p.destroy = function() {
@@ -138,6 +133,16 @@ this.createjs = this.createjs || {};
 	};
 
 	/**
+	 * Handle any error events from the tag.
+	 * @method _handleError
+	 * @protected
+	 */
+	p._handleError = function() {
+		this._clean();
+		this.dispatchEvent("error");
+	};
+
+	/**
 	 * Handle the tag's onload callback.
 	 * @method _handleTagComplete
 	 * @private
@@ -147,9 +152,19 @@ this.createjs = this.createjs || {};
 		this._result = this.resultFormatter && this.resultFormatter(this) || this._rawResult;
 
 		this._clean();
-		this._showTag();
 
 		this.dispatchEvent("complete");
+	};
+
+	/**
+	 * The tag request has not loaded within the time specified in loadTimeout.
+	 * @method _handleError
+	 * @param {Object} event The XHR error event.
+	 * @private
+	 */
+	p._handleTimeout = function () {
+		this._clean();
+		this.dispatchEvent(new createjs.Event("timeout"));
 	};
 
 	/**
@@ -160,18 +175,11 @@ this.createjs = this.createjs || {};
 	p._clean = function() {
 		this._tag.onload = null;
 		this._tag.onreadystatechange = null;
+		this._tag.onerror = null;
 		if (this._addedToDOM && this._tag.parentNode != null) {
 			this._tag.parentNode.removeChild(this._tag);
 		}
-	};
-
-	p._hideTag = function() {
-		this._startTagVisibility = this._tag.style.visibility;
-		this._tag.style.visibility = "hidden";
-	};
-
-	p._showTag = function() {
-		this._tag.style.visibility = this._startTagVisibility;
+		clearTimeout(this._loadTimeout);
 	};
 
 	/**

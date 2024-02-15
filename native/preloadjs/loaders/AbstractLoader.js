@@ -42,11 +42,11 @@ this.createjs = this.createjs || {};
 	 * The base loader, which defines all the generic methods, properties, and events. All loaders extend this class,
 	 * including the {{#crossLink "LoadQueue"}}{{/crossLink}}.
 	 * @class AbstractLoader
-	 * @param {LoadItem|object|string} The item to be loaded.
+	 * @param {LoadItem|object|string} loadItem The item to be loaded.
 	 * @param {Boolean} [preferXHR] Determines if the LoadItem should <em>try</em> and load using XHR, or take a
 	 * tag-based approach, which can be better in cross-domain situations. Not all loaders can load using one or the
 	 * other, so this is a suggested directive.
-	 * @oaram {String} [type] The type of loader. Loader types are defined as constants on the AbstractLoader class,
+	 * @param {String} [type] The type of loader. Loader types are defined as constants on the AbstractLoader class,
 	 * such as {{#crossLink "IMAGE:property"}}{{/crossLink}}, {{#crossLink "CSS:property"}}{{/crossLink}}, etc.
 	 * @extends EventDispatcher
 	 */
@@ -70,6 +70,7 @@ this.createjs = this.createjs || {};
 		 * @property canceled
 		 * @type {Boolean}
 		 * @default false
+		 * @readonly
 		 */
 		this.canceled = false;
 
@@ -104,7 +105,18 @@ this.createjs = this.createjs || {};
 		 * can be overridden to provide custom formatting.
 		 *
 		 * Optionally, a resultFormatter can return a callback function in cases where the formatting needs to be
-		 * asynchronous, such as creating a new image.
+		 * asynchronous, such as creating a new image. The callback function is passed 2 parameters, which are callbacks
+		 * to handle success and error conditions in the resultFormatter. Note that the resultFormatter method is
+		 * called in the current scope, as well as the success and error callbacks.
+		 *
+		 * <h4>Example asynchronous resultFormatter</h4>
+		 *
+		 * 	function _formatResult(loader) {
+		 * 		return function(success, error) {
+		 * 			if (errorCondition) { error(errorDetailEvent); }
+		 * 			success(result);
+		 * 		}
+		 * 	}
 		 * @property resultFormatter
 		 * @type {Function}
 		 * @default null
@@ -182,174 +194,29 @@ this.createjs = this.createjs || {};
 	var p = createjs.extend(AbstractLoader, createjs.EventDispatcher);
 	var s = AbstractLoader;
 
-	// TODO: deprecated
-	// p.initialize = function() {}; // searchable for devs wondering where it is. REMOVED. See docs for details.
+	// Remove these @deprecated properties after 1.0
+	try {
+		Object.defineProperties(s, {
+			POST: { get: createjs.deprecate(function() { return createjs.Methods.POST; }, "AbstractLoader.POST") },
+			GET: { get: createjs.deprecate(function() { return createjs.Methods.GET; }, "AbstractLoader.GET") },
 
-
-	/**
-	 * Defines a POST request, use for a method value when loading data.
-	 * @property POST
-	 * @type {string}
-	 * @default post
-	 */
-	s.POST = "POST";
-
-	/**
-	 * Defines a GET request, use for a method value when loading data.
-	 * @property GET
-	 * @type {string}
-	 * @default get
-	 */
-	s.GET = "GET";
-
-	/**
-	 * The preload type for generic binary types. Note that images are loaded as binary files when using XHR.
-	 * @property BINARY
-	 * @type {String}
-	 * @default binary
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.BINARY = "binary";
-
-	/**
-	 * The preload type for css files. CSS files are loaded using a &lt;link&gt; when loaded with XHR, or a
-	 * &lt;style&gt; tag when loaded with tags.
-	 * @property CSS
-	 * @type {String}
-	 * @default css
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.CSS = "css";
-
-	/**
-	 * The preload type for image files, usually png, gif, or jpg/jpeg. Images are loaded into an &lt;image&gt; tag.
-	 * @property IMAGE
-	 * @type {String}
-	 * @default image
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.IMAGE = "image";
-
-	/**
-	 * The preload type for javascript files, usually with the "js" file extension. JavaScript files are loaded into a
-	 * &lt;script&gt; tag.
-	 *
-	 * Since version 0.4.1+, due to how tag-loaded scripts work, all JavaScript files are automatically injected into
-	 * the body of the document to maintain parity between XHR and tag-loaded scripts. In version 0.4.0 and earlier,
-	 * only tag-loaded scripts are injected.
-	 * @property JAVASCRIPT
-	 * @type {String}
-	 * @default javascript
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.JAVASCRIPT = "javascript";
-
-	/**
-	 * The preload type for json files, usually with the "json" file extension. JSON data is loaded and parsed into a
-	 * JavaScript object. Note that if a `callback` is present on the load item, the file will be loaded with JSONP,
-	 * no matter what the {{#crossLink "LoadQueue/preferXHR:property"}}{{/crossLink}} property is set to, and the JSON
-	 * must contain a matching wrapper function.
-	 * @property JSON
-	 * @type {String}
-	 * @default json
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.JSON = "json";
-
-	/**
-	 * The preload type for jsonp files, usually with the "json" file extension. JSON data is loaded and parsed into a
-	 * JavaScript object. You are required to pass a callback parameter that matches the function wrapper in the JSON.
-	 * Note that JSONP will always be used if there is a callback present, no matter what the {{#crossLink "LoadQueue/preferXHR:property"}}{{/crossLink}}
-	 * property is set to.
-	 * @property JSONP
-	 * @type {String}
-	 * @default jsonp
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.JSONP = "jsonp";
-
-	/**
-	 * The preload type for json-based manifest files, usually with the "json" file extension. The JSON data is loaded
-	 * and parsed into a JavaScript object. PreloadJS will then look for a "manifest" property in the JSON, which is an
-	 * Array of files to load, following the same format as the {{#crossLink "LoadQueue/loadManifest"}}{{/crossLink}}
-	 * method. If a "callback" is specified on the manifest object, then it will be loaded using JSONP instead,
-	 * regardless of what the {{#crossLink "LoadQueue/preferXHR:property"}}{{/crossLink}} property is set to.
-	 * @property MANIFEST
-	 * @type {String}
-	 * @default manifest
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.MANIFEST = "manifest";
-
-	/**
-	 * The preload type for sound files, usually mp3, ogg, or wav. When loading via tags, audio is loaded into an
-	 * &lt;audio&gt; tag.
-	 * @property SOUND
-	 * @type {String}
-	 * @default sound
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.SOUND = "sound";
-
-	/**
-	 * The preload type for video files, usually mp4, ts, or ogg. When loading via tags, video is loaded into an
-	 * &lt;video&gt; tag.
-	 * @property VIDEO
-	 * @type {String}
-	 * @default video
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.VIDEO = "video";
-
-	/**
-	 * The preload type for SpriteSheet files. SpriteSheet files are JSON files that contain string image paths.
-	 * @property SPRITESHEET
-	 * @type {String}
-	 * @default spritesheet
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.SPRITESHEET = "spritesheet";
-
-	/**
-	 * The preload type for SVG files.
-	 * @property SVG
-	 * @type {String}
-	 * @default svg
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.SVG = "svg";
-
-	/**
-	 * The preload type for text files, which is also the default file type if the type can not be determined. Text is
-	 * loaded as raw text.
-	 * @property TEXT
-	 * @type {String}
-	 * @default text
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.TEXT = "text";
-
-	/**
-	 * The preload type for xml files. XML is loaded into an XML document.
-	 * @property XML
-	 * @type {String}
-	 * @default xml
-	 * @static
-	 * @since 0.6.0
-	 */
-	s.XML = "xml";
+			BINARY: { get: createjs.deprecate(function() { return createjs.Types.BINARY; }, "AbstractLoader.BINARY") },
+			CSS: { get: createjs.deprecate(function() { return createjs.Types.CSS; }, "AbstractLoader.CSS") },
+			FONT: { get: createjs.deprecate(function() { return createjs.Types.FONT; }, "AbstractLoader.FONT") },
+			FONTCSS: { get: createjs.deprecate(function() { return createjs.Types.FONTCSS; }, "AbstractLoader.FONTCSS") },
+			IMAGE: { get: createjs.deprecate(function() { return createjs.Types.IMAGE; }, "AbstractLoader.IMAGE") },
+			JAVASCRIPT: { get: createjs.deprecate(function() { return createjs.Types.JAVASCRIPT; }, "AbstractLoader.JAVASCRIPT") },
+			JSON: { get: createjs.deprecate(function() { return createjs.Types.JSON; }, "AbstractLoader.JSON") },
+			JSONP: { get: createjs.deprecate(function() { return createjs.Types.JSONP; }, "AbstractLoader.JSONP") },
+			MANIFEST: { get: createjs.deprecate(function() { return createjs.Types.MANIFEST; }, "AbstractLoader.MANIFEST") },
+			SOUND: { get: createjs.deprecate(function() { return createjs.Types.SOUND; }, "AbstractLoader.SOUND") },
+			VIDEO: { get: createjs.deprecate(function() { return createjs.Types.VIDEO; }, "AbstractLoader.VIDEO") },
+			SPRITESHEET: { get: createjs.deprecate(function() { return createjs.Types.SPRITESHEET; }, "AbstractLoader.SPRITESHEET") },
+			SVG: { get: createjs.deprecate(function() { return createjs.Types.SVG; }, "AbstractLoader.SVG") },
+			TEXT: { get: createjs.deprecate(function() { return createjs.Types.TEXT; }, "AbstractLoader.TEXT") },
+			XML: { get: createjs.deprecate(function() { return createjs.Types.XML; }, "AbstractLoader.XML") }
+		});
+	} catch (e) {}
 
 // Events
 	/**
@@ -388,7 +255,7 @@ this.createjs = this.createjs || {};
 	 * This enables loaders to maintain internal queues, and surface file load errors.
 	 * @event fileerror
 	 * @param {Object} target The object that dispatched the event.
-	 * @param {String} type The even type ("fileerror")
+	 * @param {String} type The event type ("fileerror")
 	 * @param {LoadItem|object} The item that encountered the error
 	 * @since 0.6.0
 	 */
@@ -656,13 +523,13 @@ this.createjs = this.createjs || {};
 	 * @return {Object} The formatted result
 	 * @since 0.6.0
 	 */
-	p.resultFormatter = null; //TODO: Add support for async formatting.
+	p.resultFormatter = null;
 
 	/**
 	 * Handle events from internal requests. By default, loaders will handle, and redispatch the necessary events, but
 	 * this method can be overridden for custom behaviours.
 	 * @method handleEvent
-	 * @param {Event} The event that the internal request dispatches.
+	 * @param {Event} event The event that the internal request dispatches.
 	 * @protected
 	 * @since 0.6.0
 	 */
@@ -671,12 +538,13 @@ this.createjs = this.createjs || {};
 			case "complete":
 				this._rawResult = event.target._response;
 				var result = this.resultFormatter && this.resultFormatter(this);
-				var _this = this;
+				// The resultFormatter is asynchronous
 				if (result instanceof Function) {
-					result(function(result) {
-						_this._result = result;
-						_this._sendComplete();
-					});
+					result.call(this,
+							createjs.proxy(this._resultFormatSuccess, this),
+							createjs.proxy(this._resultFormatFailed, this)
+					);
+				// The result formatter is synchronous
 				} else {
 					this._result =  result || this._rawResult;
 					this._sendComplete();
@@ -694,20 +562,33 @@ this.createjs = this.createjs || {};
 			case "abort":
 			case "timeout":
 				if (!this._isCanceled()) {
-					this.dispatchEvent(event.type);
+					this.dispatchEvent(new createjs.ErrorEvent("PRELOAD_" + event.type.toUpperCase() + "_ERROR"));
 				}
 				break;
 		}
 	};
 
 	/**
-	 * @method buildPath
-	 * @protected
-	 * @deprecated Use the {{#crossLink "RequestUtils"}}{{/crossLink}} method {{#crossLink "RequestUtils/buildPath"}}{{/crossLink}}
-	 * instead.
+	 * The "success" callback passed to {{#crossLink "AbstractLoader/resultFormatter"}}{{/crossLink}} asynchronous
+	 * functions.
+	 * @method _resultFormatSuccess
+	 * @param {Object} result The formatted result
+	 * @private
 	 */
-	p.buildPath = function (src, data) {
-		return createjs.RequestUtils.buildPath(src, data);
+	p._resultFormatSuccess = function (result) {
+		this._result = result;
+		this._sendComplete();
+	};
+
+	/**
+	 * The "error" callback passed to {{#crossLink "AbstractLoader/resultFormatter"}}{{/crossLink}} asynchronous
+	 * functions.
+	 * @method _resultFormatSuccess
+	 * @param {Object} error The error event
+	 * @private
+	 */
+	p._resultFormatFailed = function (event) {
+		this._sendError(event);
 	};
 
 	/**

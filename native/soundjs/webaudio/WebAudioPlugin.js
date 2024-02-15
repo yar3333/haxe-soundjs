@@ -45,18 +45,29 @@ this.createjs = this.createjs || {};
 
 	 * <h4>Known Browser and OS issues for Web Audio</h4>
 	 * <b>Firefox 25</b>
-	 * <ul><li>mp3 audio files do not load properly on all windows machines, reported
-	 * <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=929969" target="_blank">here</a>. </br>
-	 * For this reason it is recommended to pass another FF supported type (ie ogg) first until this bug is resolved, if possible.</li></ul>
-	 * <br />
+	 * <li>
+	 *     mp3 audio files do not load properly on all windows machines, reported <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=929969" target="_blank">here</a>.
+	 *     <br />For this reason it is recommended to pass another FireFox-supported type (i.e. ogg) as the default
+	 *     extension, until this bug is resolved
+	 * </li>
+	 *
 	 * <b>Webkit (Chrome and Safari)</b>
-	 * <ul><li>AudioNode.disconnect does not always seem to work.  This can cause the file size to grow over time if you
-	 * are playing a lot of audio files.</li></ul>
-	 * <br />
+	 * <li>
+	 *     AudioNode.disconnect does not always seem to work.  This can cause the file size to grow over time if you
+	 * 	   are playing a lot of audio files.
+	 * </li>
+	 *
 	 * <b>iOS 6 limitations</b>
-	 * 	<ul><li>Sound is initially muted and will only unmute through play being called inside a user initiated event (touch/click).</li>
-	 *	<li>A bug exists that will distort uncached audio when a video element is present in the DOM.  You can avoid this bug
-	 * 	by ensuring the audio and video audio share the same sampleRate.</li>
+	 * <ul>
+	 *     <li>
+	 *         Sound is initially muted and will only unmute through play being called inside a user initiated event
+	 *         (touch/click). Please read the mobile playback notes in the the {{#crossLink "Sound"}}{{/crossLink}}
+	 *         class for a full overview of the limitations, and how to get around them.
+	 *     </li>
+	 *	   <li>
+	 *	       A bug exists that will distort un-cached audio when a video element is present in the DOM. You can avoid
+	 *	       this bug by ensuring the audio and video audio share the same sample rate.
+	 *	   </li>
 	 * </ul>
 	 * @class WebAudioPlugin
 	 * @extends AbstractPlugin
@@ -75,15 +86,6 @@ this.createjs = this.createjs || {};
 		 * @protected
 		 */
 		this._panningModel = s._panningModel;;
-
-		/**
-		 * The internal master volume value of the plugin.
-		 * @property _volume
-		 * @type {Number}
-		 * @default 1
-		 * @protected
-		 */
-		this._volume = 1;
 
 		/**
 		 * The web audio context, which WebAudio uses to play audio. All nodes that interact with the WebAudioPlugin
@@ -124,10 +126,6 @@ this.createjs = this.createjs || {};
 	}
 	var p = createjs.extend(WebAudioPlugin, createjs.AbstractPlugin);
 
-	// TODO: deprecated
-	// p.initialize = function() {}; // searchable for devs wondering where it is. REMOVED. See docs for details.
-
-
 // Static Properties
 	var s = WebAudioPlugin;
 	/**
@@ -136,7 +134,7 @@ this.createjs = this.createjs || {};
 	 * @property _capabilities
 	 * @type {Object}
 	 * @default null
-	 * @protected
+	 * @private
 	 * @static
 	 */
 	s._capabilities = null;
@@ -145,7 +143,7 @@ this.createjs = this.createjs || {};
 	 * Value to set panning model to equal power for WebAudioSoundInstance.  Can be "equalpower" or 0 depending on browser implementation.
 	 * @property _panningModel
 	 * @type {Number / String}
-	 * @protected
+	 * @private
 	 * @static
 	 */
 	s._panningModel = "equalpower";
@@ -163,6 +161,38 @@ this.createjs = this.createjs || {};
 	 */
 	s.context = null;
 
+	/**
+	 * The scratch buffer that will be assigned to the buffer property of a source node on close.
+	 * Works around an iOS Safari bug: https://github.com/CreateJS/SoundJS/issues/102
+	 *
+	 * Advanced users can set this to an existing source node, but <b>must</b> do so before they call
+	 * {{#crossLink "Sound/registerPlugins"}}{{/crossLink}} or {{#crossLink "Sound/initializeDefaultPlugins"}}{{/crossLink}}.
+	 *
+	 * @property _scratchBuffer
+	 * @type {AudioBuffer}
+	 * @private
+	 * @static
+	 */
+	 s._scratchBuffer = null;
+
+	/**
+	 * Indicated whether audio on iOS has been unlocked, which requires a touchend/mousedown event that plays an
+	 * empty sound.
+	 * @property _unlocked
+	 * @type {boolean}
+	 * @since 0.6.2
+	 * @private
+	 */
+	s._unlocked = false;
+
+	/**
+	 * The default sample rate used when checking for iOS compatibility. See {{#crossLink "WebAudioPlugin/_createAudioContext"}}{{/crossLink}}.
+	 * @property DEFAULT_SAMPLE_REATE
+	 * @type {number}
+	 * @default 44100
+	 * @static
+	 */
+	s.DEFAULT_SAMPLE_RATE = 44100;
 
 // Static Public Methods
 	/**
@@ -198,8 +228,9 @@ this.createjs = this.createjs || {};
 	 * @since 0.4.1
 	 */
 	s.playEmptySound = function() {
+		if (s.context == null) {return;}
 		var source = s.context.createBufferSource();
-		source.buffer = s.context.createBuffer(1, 1, 22050);
+		source.buffer = s._scratchBuffer;
 		source.connect(s.context.destination);
 		source.start(0, 0, 0);
 	};
@@ -211,7 +242,7 @@ this.createjs = this.createjs || {};
 	 * @method _isFileXHRSupported
 	 * @return {Boolean} If XHR is supported.
 	 * @since 0.4.2
-	 * @protected
+	 * @private
 	 * @static
 	 */
 	s._isFileXHRSupported = function() {
@@ -240,11 +271,11 @@ this.createjs = this.createjs || {};
 	};
 
 	/**
-	 * Determine the capabilities of the plugin. Used internally. Please see the Sound API {{#crossLink "Sound/getCapabilities"}}{{/crossLink}}
+	 * Determine the capabilities of the plugin. Used internally. Please see the Sound API {{#crossLink "Sound/capabilities:property"}}{{/crossLink}}
 	 * method for an overview of plugin capabilities.
 	 * @method _generateCapabilities
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._generateCapabilities = function () {
 		if (s._capabilities != null) {return;}
@@ -253,19 +284,22 @@ this.createjs = this.createjs || {};
 		if (t.canPlayType == null) {return null;}
 
 		if (s.context == null) {
-			if (window.AudioContext) {
-				s.context = new AudioContext();
-			} else if (window.webkitAudioContext) {
-				s.context = new webkitAudioContext();
-			} else {
-				return null;
-			}
+			s.context = s._createAudioContext();
+			if (s.context == null) { return null; }
+		}
+		if (s._scratchBuffer == null) {
+			s._scratchBuffer = s.context.createBuffer(1, 1, 22050);
 		}
 
 		s._compatibilitySetUp();
 
-		// playing this inside of a touch event will enable audio on iOS, which starts muted
-		s.playEmptySound();
+		// Listen for document level clicks to unlock WebAudio on iOS. See the _unlock method.
+		if ("ontouchstart" in window && s.context.state != "running") {
+			s._unlock(); // When played inside of a touch event, this will enable audio on iOS immediately.
+			document.addEventListener("mousedown", s._unlock, true);
+			document.addEventListener("touchstart", s._unlock, true);
+			document.addEventListener("touchend", s._unlock, true);
+		}
 
 		s._capabilities = {
 			panning:true,
@@ -290,6 +324,43 @@ this.createjs = this.createjs || {};
 	};
 
 	/**
+	 * Create an audio context for the sound.
+	 *
+	 * This method handles both vendor prefixes (specifically webkit support), as well as a case on iOS where
+	 * audio played with a different sample rate may play garbled when first started. The default sample rate is
+	 * 44,100, however it can be changed using the {{#crossLink "WebAudioPlugin/DEFAULT_SAMPLE_RATE:property"}}{{/crossLink}}.
+	 * @method _createAudioContext
+	 * @return {AudioContext | webkitAudioContext}
+	 * @private
+	 * @static
+	 * @since 1.0.0
+	 */
+	s._createAudioContext = function() {
+		// Slightly modified version of https://github.com/Jam3/ios-safe-audio-context
+		// Resolves issues with first-run contexts playing garbled on iOS.
+		var AudioCtor = (window.AudioContext || window.webkitAudioContext);
+		if (AudioCtor == null) { return null; }
+		var context = new AudioCtor();
+
+		// Check if hack is necessary. Only occurs in iOS6+ devices
+		// and only when you first boot the iPhone, or play a audio/video
+		// with a different sample rate
+		if (/(iPhone|iPad)/i.test(navigator.userAgent)
+				&& context.sampleRate !== s.DEFAULT_SAMPLE_RATE) {
+			var buffer = context.createBuffer(1, 1, s.DEFAULT_SAMPLE_RATE),
+					dummy = context.createBufferSource();
+			dummy.buffer = buffer;
+			dummy.connect(context.destination);
+			dummy.start(0);
+			dummy.disconnect();
+			context.close() // dispose old context
+
+			context = new AudioCtor();
+		}
+		return context;
+	}
+
+	/**
 	 * Set up compatibility if only deprecated web audio calls are supported.
 	 * See http://www.w3.org/TR/webaudio/#DeprecationNotes
 	 * Needed so we can support new browsers that don't support deprecated calls (Firefox) as well as old browsers that
@@ -297,7 +368,7 @@ this.createjs = this.createjs || {};
 	 *
 	 * @method _compatibilitySetUp
 	 * @static
-	 * @protected
+	 * @private
 	 * @since 0.4.2
 	 */
 	s._compatibilitySetUp = function() {
@@ -315,6 +386,29 @@ this.createjs = this.createjs || {};
 
 		// panningModel
 		s._panningModel = 0;
+	};
+
+	/**
+	 * Try to unlock audio on iOS. This is triggered from either WebAudio plugin setup (which will work if inside of
+	 * a `mousedown` or `touchend` event stack), or the first document touchend/mousedown event. If it fails (touchend
+	 * will fail if the user presses for too long, indicating a scroll event instead of a click event.
+	 *
+	 * Note that earlier versions of iOS supported `touchstart` for this, but iOS9 removed this functionality. Adding
+	 * a `touchstart` event to support older platforms may preclude a `mousedown` even from getting fired on iOS9, so we
+	 * stick with `mousedown` and `touchend`.
+	 * @method _unlock
+	 * @since 0.6.2
+	 * @private
+	 */
+	s._unlock = function() {
+		if (s._unlocked) { return; }
+		s.playEmptySound();
+		if (s.context.state == "running") {
+			document.removeEventListener("mousedown", s._unlock, true);
+			document.removeEventListener("touchend", s._unlock, true);
+			document.removeEventListener("touchstart", s._unlock, true);
+			s._unlocked = true;
+		}
 	};
 
 
@@ -335,6 +429,7 @@ this.createjs = this.createjs || {};
 	p._addPropsToClasses = function() {
 		var c = this._soundInstanceClass;
 		c.context = this.context;
+		c._scratchBuffer = s._scratchBuffer;
 		c.destinationNode = this.gainNode;
 		c._panningModel = this._panningModel;
 

@@ -72,10 +72,6 @@ this.createjs = this.createjs || {};
 	}
 	var p = createjs.extend(HTMLAudioSoundInstance, createjs.AbstractSoundInstance);
 
-	// TODO: deprecated
-	// p.initialize = function() {}; // searchable for devs wondering where it is. REMOVED. See docs for details.
-
-
 // Public Methods
 	/**
 	 * Called by {{#crossLink "Sound"}}{{/crossLink}} when plugin does not handle master volume.
@@ -129,14 +125,14 @@ this.createjs = this.createjs || {};
 				tag.currentTime = this._startTime;
 			} catch (e) {
 			} // Reset Position
-			createjs.HTMLAudioTagPool.setInstance(this.src, tag);
+			createjs.HTMLAudioTagPool.set(this.src, tag);
 			this._playbackResource = null;
 		}
 	};
 
-	p._beginPlaying = function (offset, loop, volume, pan) {
-		this._playbackResource = createjs.HTMLAudioTagPool.getInstance(this.src);
-		return this.AbstractSoundInstance__beginPlaying(offset, loop, volume, pan);
+	p._beginPlaying = function (playProps) {
+		this._playbackResource = createjs.HTMLAudioTagPool.get(this.src);
+		return this.AbstractSoundInstance__beginPlaying(playProps);
 	};
 
 	p._handleSoundReady = function (event) {
@@ -250,8 +246,8 @@ this.createjs = this.createjs || {};
 		}
 	};
 
-	p._updateDuration = function () {
-		this._audioSpriteStopTime = (startTime + duration) * 0.001;
+	p._updateStartTime = function () {
+		this._audioSpriteStopTime = (this._startTime + this._duration) * 0.001;
 
 		if(this.playState == createjs.Sound.PLAY_SUCCEEDED) {
 			this._playbackResource.removeEventListener(createjs.HTMLAudioPlugin._AUDIO_ENDED, this._endedHandler, false);
@@ -259,11 +255,19 @@ this.createjs = this.createjs || {};
 		}
 	};
 
-	/*	This should never change
+	p._updateDuration = function () {
+		this._audioSpriteStopTime = (this._startTime + this._duration) * 0.001;
+
+		if(this.playState == createjs.Sound.PLAY_SUCCEEDED) {
+			this._playbackResource.removeEventListener(createjs.HTMLAudioPlugin._AUDIO_ENDED, this._endedHandler, false);
+			this._playbackResource.addEventListener(createjs.HTMLAudioPlugin._TIME_UPDATE, this._audioSpriteEndHandler, false);
+		}
+	};
+
 	p._setDurationFromSource = function () {
 		this._duration = createjs.HTMLAudioTagPool.getDuration(this.src);
+		this._playbackResource = null;
 	};
-	*/
 
 	createjs.HTMLAudioSoundInstance = createjs.promote(HTMLAudioSoundInstance, "AbstractSoundInstance");
 }());

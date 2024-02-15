@@ -46,18 +46,19 @@ this.createjs = this.createjs || {};
 	 * @class SoundLoader
 	 * @param {LoadItem|Object} loadItem
 	 * @param {Boolean} preferXHR
+	 * @extends AbstractMediaLoader
 	 * @constructor
 	 */
 	function SoundLoader(loadItem, preferXHR) {
-		this.AbstractMediaLoader_constructor(loadItem, preferXHR, createjs.AbstractLoader.SOUND);
+		this.AbstractMediaLoader_constructor(loadItem, preferXHR, createjs.Types.SOUND);
 
 		// protected properties
-		if (createjs.RequestUtils.isAudioTag(loadItem)) {
+		if (createjs.DomUtils.isAudioTag(loadItem)) {
 			this._tag = loadItem;
-		} else if (createjs.RequestUtils.isAudioTag(loadItem.src)) {
+		} else if (createjs.DomUtils.isAudioTag(loadItem.src)) {
 			this._tag = loadItem;
-		} else if (createjs.RequestUtils.isAudioTag(loadItem.tag)) {
-			this._tag = createjs.RequestUtils.isAudioTag(loadItem) ? loadItem : loadItem.src;
+		} else if (createjs.DomUtils.isAudioTag(loadItem.tag)) {
+			this._tag = createjs.DomUtils.isAudioTag(loadItem) ? loadItem : loadItem.src;
 		}
 
 		if (this._tag != null) {
@@ -71,19 +72,19 @@ this.createjs = this.createjs || {};
 	// static methods
 	/**
 	 * Determines if the loader can load a specific item. This loader can only load items that are of type
-	 * {{#crossLink "AbstractLoader/SOUND:property"}}{{/crossLink}}.
+	 * {{#crossLink "Types/SOUND:property"}}{{/crossLink}}.
 	 * @method canLoadItem
 	 * @param {LoadItem|Object} item The LoadItem that a LoadQueue is trying to load.
 	 * @returns {Boolean} Whether the loader can load the item.
 	 * @static
 	 */
 	s.canLoadItem = function (item) {
-		return item.type == createjs.AbstractLoader.SOUND;
+		return item.type == createjs.Types.SOUND;
 	};
 
 	// protected methods
 	p._createTag = function (src) {
-		var tag = document.createElement("audio");
+		var tag = createjs.Elements.audio();
 		tag.autoplay = false;
 		tag.preload = "none";
 

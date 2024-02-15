@@ -39,12 +39,6 @@ this.createjs = this.createjs || {};
 	"use strict";
 
 	/**
-	 * FlashPlugin has been renamed to {{#crossLink "FlashAudioPlugin"}}{{/crossLink}}.
-	 * @class FlashPlugin
-	 * @deprecated
-	 */
-
-	/**
 	 * Play sounds using a Flash instance. This plugin is not used by default, and must be registered manually in
 	 * {{#crossLink "Sound"}}{{/crossLink}} using the {{#crossLink "Sound/registerPlugins"}}{{/crossLink}} method. This
 	 * plugin is recommended to be included if sound support is required in older browsers such as IE8.
@@ -153,17 +147,6 @@ this.createjs = this.createjs || {};
 		this._flashPreloadInstances = {};
 		//TODO consider combining _flashInstances and _flashPreloadInstances into a single hash
 
-		// TODO remove _queuedInstances
-		/**
-		 * An array of Sound Preload instances that are waiting to preload. Once Flash is initialized, the queued
-		 * instances are preloaded.
-		 * @property _queuedInstances
-		 * @type {Object}
-		 * @protected
-		 */
-		this._queuedInstances = [];
-
-
 		this._capabilities = s._capabilities;
 
 		this._loaderClass = createjs.FlashAudioLoader;
@@ -193,10 +176,6 @@ this.createjs = this.createjs || {};
 	var p = createjs.extend(FlashAudioPlugin, createjs.AbstractPlugin);
 	var s = FlashAudioPlugin;
 
-	// TODO: deprecated
-	// p.initialize = function() {}; // searchable for devs wondering where it is. REMOVED. See docs for details.
-
-
 // Static properties
 	/**
 	 * Event constant for the "registerFlashID" event for cleaner code.
@@ -204,7 +183,7 @@ this.createjs = this.createjs || {};
 	 * @type {String}
 	 * @default registerflashid
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._REG_FLASHID = "registerflashid";
 
@@ -214,17 +193,17 @@ this.createjs = this.createjs || {};
 	 * @type {String}
 	 * @default unregisterflashid
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._UNREG_FLASHID = "unregisterflashid";
 
 	/**
 	 * The capabilities of the plugin. This is generated via the {{#crossLink "WebAudioPlugin/_generateCapabilities"}}{{/crossLink}}
-	 * method. Please see the Sound {{#crossLink "Sound/getCapabilities"}}{{/crossLink}} method for a list of available
+	 * method. Please see the Sound {{#crossLink "Sound/capabilities:property"}}{{/crossLink}} method for a list of available
 	 * capabilities.
 	 * @property _capabilities
 	 * @type {Object}
-	 * @protected
+	 * @private
 	 * @static
 	 */
 	s._capabilities = null;
@@ -257,11 +236,11 @@ this.createjs = this.createjs || {};
 	};
 
 	/**
-	 * Determine the capabilities of the plugin. Used internally. Please see the Sound API {{#crossLink "Sound/getCapabilities"}}{{/crossLink}}
+	 * Determine the capabilities of the plugin. Used internally. Please see the Sound API {{#crossLink "Sound/capabilities:property"}}{{/crossLink}}
 	 * method for an overview of plugin capabilities.
 	 * @method _generateCapabilities
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._generateCapabilities = function () {
 		if (s._capabilities != null) {return;}
@@ -285,25 +264,13 @@ this.createjs = this.createjs || {};
 
 //public methods
 	p.register = function (src, instances) {
-		if (!this.flashReady) {
-			this._queuedInstances.push(src);
-		}
 		var loader = this.AbstractPlugin_register(src, instances);
 		loader.addEventListener(s._REG_FLASHID, createjs.proxy(this.registerPreloadInstance, this));
 		loader.addEventListener(s._UNREG_FLASHID, createjs.proxy(this.unregisterPreloadInstance, this));
 		return loader;
 	};
 
-	p.removeSound = function (src) {
-		var i = createjs.indexOf(this._queuedInstances, src);
-		if(i != -1) {this._queuedInstances.splice(i,1);}
-		// NOTE sound cannot be removed from a swf
-
-		this.AbstractPlugin_removeSound(src);
-	};
-
 	p.removeAllSounds = function () {
-		this._queuedInstances.length = 0;
 		this._flashInstances = {};
 		this._flashPreloadInstances = {};
 		// NOTE sound cannot be removed from a swf
@@ -345,13 +312,6 @@ this.createjs = this.createjs || {};
 
 		this._loaderClass.setFlash(this._flash);
 		this._soundInstanceClass.setFlash(this._flash);
-
-		// Anything that needed to be preloaded, can now do so.
-		for (var i = 0, l = this._queuedInstances.length; i < l; i++) {
-			this._flash.register(this._queuedInstances[i]);  // NOTE this flash function currently does nothing
-		}
-		this._queuedInstances.length = 0;
-
 	};
 
 	/**
@@ -496,5 +456,4 @@ this.createjs = this.createjs || {};
 	};
 
 	createjs.FlashAudioPlugin = createjs.promote(FlashAudioPlugin, "AbstractPlugin");
-	createjs.FlashPlugin = createjs.FlashAudioPlugin;		// TODO remove deprecated
 }());

@@ -48,7 +48,7 @@ this.createjs = this.createjs || {};
 	 * @protected
 	 */
 	function Loader(loadItem) {
-		this.AbstractLoader_constructor(loadItem, false, createjs.AbstractLoader.SOUND);
+		this.AbstractLoader_constructor(loadItem, false, createjs.Types.SOUND);
 
 
 // Public properties
@@ -63,17 +63,13 @@ this.createjs = this.createjs || {};
 	}
 	var p = createjs.extend(Loader, createjs.AbstractLoader);
 
-	// TODO: deprecated
-	// p.initialize = function() {}; // searchable for devs wondering where it is. REMOVED. See docs for details.
-
-
 // Static Properties
 	var s = Loader;
 	/**
 	 * A reference to the Flash instance that gets created.
 	 * @property flash
 	 * @type {Object | Embed}
-	 * @protected
+	 * @private
 	 */
 	s._flash = null;
 
@@ -81,7 +77,7 @@ this.createjs = this.createjs || {};
 	 * A list of loader instances that tried to load before _flash was set
 	 * @property _preloadInstances
 	 * @type {Array}
-	 * @protected
+	 * @private
 	 */
 	s._preloadInstances = [];
 

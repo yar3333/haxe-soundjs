@@ -43,19 +43,14 @@ this.createjs = this.createjs || {};
 	 *
 	 * @class WebAudioLoader
 	 * @param {String} loadItem The item to be loaded
-	 * @param {Object} flash The flash instance that will do the preloading.
 	 * @extends XHRRequest
 	 * @protected
 	 */
 	function Loader(loadItem) {
-		this.AbstractLoader_constructor(loadItem, true, createjs.AbstractLoader.SOUND);
+		this.AbstractLoader_constructor(loadItem, true, createjs.Types.SOUND);
 
 	};
 	var p = createjs.extend(Loader, createjs.AbstractLoader);
-
-	// TODO: deprecated
-	// p.initialize = function() {}; // searchable for devs wondering where it is. REMOVED. See docs for details.
-
 
 	/**
 	 * web audio context required for decoding audio
@@ -82,14 +77,14 @@ this.createjs = this.createjs || {};
 		// OJR we leave this wrapped in Loader because we need to reference src and the handler only receives a single argument, the decodedAudio
 		Loader.context.decodeAudioData(this._rawResult,
 	         createjs.proxy(this._handleAudioDecoded, this),
-	         createjs.proxy(this._handleError, this));
+	         createjs.proxy(this._sendError, this));
 	};
 
 
 	/**
 	* The audio has been decoded.
 	* @method handleAudioDecoded
-	 * @param decoded
+	* @param decoded
 	* @protected
 	*/
 	p._handleAudioDecoded = function (decodedAudio) {

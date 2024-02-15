@@ -46,9 +46,8 @@ this.createjs = this.createjs || {};
 	 * <h4>Known Browser and OS issues for HTML Audio</h4>
 	 * <b>All browsers</b><br />
 	 * Testing has shown in all browsers there is a limit to how many audio tag instances you are allowed.  If you exceed
-	 * this limit, you can expect to see unpredictable results.  This will be seen as soon as you register sounds, as
-	 * tags are precreated to allow Chrome to load them.  Please use {{#crossLink "Sound.MAX_INSTANCES"}}{{/crossLink}} as
-	 * a guide to how many total audio tags you can safely use in all browsers.
+	 * this limit, you can expect to see unpredictable results. Please use {{#crossLink "Sound.MAX_INSTANCES"}}{{/crossLink}} as
+	 * a guide to how many total audio tags you can safely use in all browsers.  This issue is primarily limited to IE9.
 	 *
      * <b>IE html limitations</b><br />
      * <ul><li>There is a delay in applying volume changes to tags that occurs once playback is started. So if you have
@@ -57,7 +56,7 @@ this.createjs = this.createjs || {};
      * <li>MP3 encoding will not always work for audio tags if it's not default.  We've found default encoding with
      * 64kbps works.</li>
 	 * <li>Occasionally very short samples will get cut off.</li>
-	 * <li>There is a limit to how many audio tags you can load and play at once, which appears to be determined by
+	 * <li>There is a limit to how many audio tags you can load or play at once, which appears to be determined by
 	 * hardware and browser settings.  See {{#crossLink "HTMLAudioPlugin.MAX_INSTANCES"}}{{/crossLink}} for a safe estimate.
 	 * Note that audio sprites can be used as a solution to this issue.</li></ul>
 	 *
@@ -65,12 +64,11 @@ this.createjs = this.createjs || {};
 	 * <ul><li>Safari requires Quicktime to be installed for audio playback.</li></ul>
 	 *
 	 * <b>iOS 6 limitations</b><br />
-	 * <ul><li>Note it is recommended to use {{#crossLink "WebAudioPlugin"}}{{/crossLink}} for iOS (6+)</li>
-	 * 		<li>HTML Audio is disabled by default because</li>
-	 * 		<li>can only have one &lt;audio&gt; tag</li>
+	 * <ul><li>can only have one &lt;audio&gt; tag</li>
 	 * 		<li>can not preload or autoplay the audio</li>
 	 * 		<li>can not cache the audio</li>
 	 * 		<li>can not play the audio except inside a user initiated event.</li>
+	 *		<li>Note it is recommended to use {{#crossLink "WebAudioPlugin"}}{{/crossLink}} for iOS (6+)</li>
 	 * 		<li>audio sprites can be used to mitigate some of these issues and are strongly recommended on iOS</li>
 	 * </ul>
 	 *
@@ -95,19 +93,6 @@ this.createjs = this.createjs || {};
 
 
 	// Public Properties
-		/**
-		 * The default number of instances to allow.  Used by {{#crossLink "Sound"}}{{/crossLink}} when a source
-		 * is registered using the {{#crossLink "Sound/register"}}{{/crossLink}} method.  This is only used if
-		 * a value is not provided.
-		 *
-		 * <b>NOTE this property only exists as a limitation of HTML audio.</b>
-		 * @property defaultNumChannels
-		 * @type {Number}
-		 * @default 2
-		 * @since 0.4.0
-		 */
-		this.defaultNumChannels = 2;
-
 		this._capabilities = s._capabilities;
 
 		this._loaderClass = createjs.SoundLoader;
@@ -117,13 +102,9 @@ this.createjs = this.createjs || {};
 	var p = createjs.extend(HTMLAudioPlugin, createjs.AbstractPlugin);
 	var s = HTMLAudioPlugin;
 
-	// TODO: deprecated
-	// p.initialize = function() {}; // searchable for devs wondering where it is. REMOVED. See docs for details.
-
-
 // Static Properties
 	/**
-	 * The maximum number of instances that can be loaded and played. This is a browser limitation, primarily limited to IE9.
+	 * The maximum number of instances that can be loaded or played. This is a browser limitation, primarily limited to IE9.
 	 * The actual number varies from browser to browser (and is largely hardware dependant), but this is a safe estimate.
 	 * Audio sprites work around this limitation.
 	 * @property MAX_INSTANCES
@@ -139,7 +120,7 @@ this.createjs = this.createjs || {};
 	 * @type {String}
 	 * @default canplaythrough
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._AUDIO_READY = "canplaythrough";
 
@@ -149,7 +130,7 @@ this.createjs = this.createjs || {};
 	 * @type {String}
 	 * @default ended
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._AUDIO_ENDED = "ended";
 
@@ -159,7 +140,7 @@ this.createjs = this.createjs || {};
 	 * @type {String}
 	 * @default seeked
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._AUDIO_SEEKED = "seeked";
 
@@ -169,7 +150,7 @@ this.createjs = this.createjs || {};
 	 * @type {String}
 	 * @default stalled
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._AUDIO_STALLED = "stalled";
 
@@ -180,34 +161,20 @@ this.createjs = this.createjs || {};
 	 * @type {String}
 	 * @default timeupdate
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._TIME_UPDATE = "timeupdate";
 
 	/**
 	 * The capabilities of the plugin. This is generated via the {{#crossLink "HTMLAudioPlugin/_generateCapabilities"}}{{/crossLink}}
-	 * method. Please see the Sound {{#crossLink "Sound/getCapabilities"}}{{/crossLink}} method for an overview of all
+	 * method. Please see the Sound {{#crossLink "Sound/capabilities:property"}}{{/crossLink}} method for an overview of all
 	 * of the available properties.
 	 * @property _capabilities
 	 * @type {Object}
-	 * @protected
+	 * @private
 	 * @static
 	 */
 	s._capabilities = null;
-
-	/**
-	 * Deprecated now that we have audio sprite support.  Audio sprites are strongly recommend on iOS for the following reasons:
-	 * <li>it can only have one &lt;audio&gt; tag</li>
-	 * <li>can not preload or autoplay the audio</li>
-	 * <li>can not cache the audio</li>
-	 * <li>can not play the audio except inside a user initiated event</li>
-	 *
-	 * @property enableIOS
-	 * @type {Boolean}
-	 * @default false
-	 * @deprecated
-	 */
-	s.enableIOS = false;
 
 
 // Static Methods
@@ -220,16 +187,15 @@ this.createjs = this.createjs || {};
 	 */
 	s.isSupported = function () {
 		s._generateCapabilities();
-		if (s._capabilities == null) {return false;}
-		return true;
+		return (s._capabilities != null);
 	};
 
 	/**
-	 * Determine the capabilities of the plugin. Used internally. Please see the Sound API {{#crossLink "Sound/getCapabilities"}}{{/crossLink}}
+	 * Determine the capabilities of the plugin. Used internally. Please see the Sound API {{#crossLink "Sound/capabilities:property"}}{{/crossLink}}
 	 * method for an overview of plugin capabilities.
 	 * @method _generateCapabilities
 	 * @static
-	 * @protected
+	 * @private
 	 */
 	s._generateCapabilities = function () {
 		if (s._capabilities != null) {return;}
@@ -237,7 +203,7 @@ this.createjs = this.createjs || {};
 		if (t.canPlayType == null) {return null;}
 
 		s._capabilities = {
-			panning:true,
+			panning:false,
 			volume:true,
 			tracks:-1
 		};
@@ -254,15 +220,9 @@ this.createjs = this.createjs || {};
 
 
 // public methods
-	p.register = function (loadItem, instances) {
-		var channel = createjs.HTMLAudioTagPool.get(loadItem.src);
-		var tag = null;
-		for (var i = 0; i < instances; i++) {
-			tag = this._createTag(loadItem.src);
-			channel.add(tag);
-		}
-
-		var loader = this.AbstractPlugin_register(loadItem, instances);
+	p.register = function (loadItem) {
+		var tag = createjs.HTMLAudioTagPool.get(loadItem.src);
+		var loader = this.AbstractPlugin_register(loadItem);
 		loader.setTag(tag);
 
 		return loader;
@@ -275,7 +235,7 @@ this.createjs = this.createjs || {};
 
 	p.create = function (src, startTime, duration) {
 		var si = this.AbstractPlugin_create(src, startTime, duration);
-		si.setPlaybackResource(null);
+		si.playbackResource = null;
 		return si;
 	};
 
@@ -286,24 +246,6 @@ this.createjs = this.createjs || {};
 	// plugin does not support these
 	p.setVolume = p.getVolume = p.setMute = null;
 
-
-// private methods
-	/**
-	 * Create an HTML audio tag.
-	 * @method _createTag
-	 * @param {String} src The source file to set for the audio tag.
-	 * @return {HTMLElement} Returns an HTML audio tag.
-	 * @protected
-	 */
-	// TODO move this to tagpool when it changes to be a standard object pool
-	p._createTag = function (src) {
-		var tag = document.createElement("audio");
-		tag.autoplay = false;
-		tag.preload = "none";
-		//LM: Firefox fails when this the preload="none" for other tags, but it needs to be "none" to ensure PreloadJS works.
-		tag.src = src;
-		return tag;
-	};
 
 	createjs.HTMLAudioPlugin = createjs.promote(HTMLAudioPlugin, "AbstractPlugin");
 }());

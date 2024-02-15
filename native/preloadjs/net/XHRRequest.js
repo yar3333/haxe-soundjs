@@ -50,7 +50,7 @@ this.createjs = this.createjs || {};
 	 * for an overview of supported file properties.
 	 * @extends AbstractLoader
 	 */
-	function XHRRequest(item) {
+	function XHRRequest (item) {
 		this.AbstractRequest_constructor(item);
 
 		// protected properties
@@ -177,15 +177,28 @@ this.createjs = this.createjs || {};
 		}
 
 		//Events
-		this._request.addEventListener("loadstart", this._handleLoadStartProxy, false);
-		this._request.addEventListener("progress", this._handleProgressProxy, false);
-		this._request.addEventListener("abort", this._handleAbortProxy, false);
-		this._request.addEventListener("error",this._handleErrorProxy, false);
-		this._request.addEventListener("timeout", this._handleTimeoutProxy, false);
+		if (this._request.addEventListener != null) {
+			this._request.addEventListener("loadstart", this._handleLoadStartProxy, false);
+			this._request.addEventListener("progress", this._handleProgressProxy, false);
+			this._request.addEventListener("abort", this._handleAbortProxy, false);
+			this._request.addEventListener("error", this._handleErrorProxy, false);
+			this._request.addEventListener("timeout", this._handleTimeoutProxy, false);
 
-		// Note: We don't get onload in all browsers (earlier FF and IE). onReadyStateChange handles these.
-		this._request.addEventListener("load", this._handleLoadProxy, false);
-		this._request.addEventListener("readystatechange", this._handleReadyStateChangeProxy, false);
+			// Note: We don't get onload in all browsers (earlier FF and IE). onReadyStateChange handles these.
+			this._request.addEventListener("load", this._handleLoadProxy, false);
+			this._request.addEventListener("readystatechange", this._handleReadyStateChangeProxy, false);
+		} else {
+			// IE9 support
+			this._request.onloadstart = this._handleLoadStartProxy;
+			this._request.onprogress = this._handleProgressProxy;
+			this._request.onabort = this._handleAbortProxy;
+			this._request.onerror = this._handleErrorProxy;
+			this._request.ontimeout = this._handleTimeoutProxy;
+
+			// Note: We don't get onload in all browsers (earlier FF and IE). onReadyStateChange handles these.
+			this._request.onload = this._handleLoadProxy;
+			this._request.onreadystatechange = this._handleReadyStateChangeProxy;
+		}
 
 		// Set up a timeout if we don't have XHR2
 		if (this._xhrLevel == 1) {
@@ -194,10 +207,10 @@ this.createjs = this.createjs || {};
 
 		// Sometimes we get back 404s immediately, particularly when there is a cross origin request.  // note this does not catch in Chrome
 		try {
-			if (!this._item.values || this._item.method == createjs.AbstractLoader.GET) {
+			if (!this._item.values) {
 				this._request.send();
-			} else if (this._item.method == createjs.AbstractLoader.POST) {
-				this._request.send(createjs.RequestUtils.formatQueryString(this._item.values));
+			} else {
+				this._request.send(createjs.URLUtils.formatQueryString(this._item.values));
 			}
 		} catch (error) {
 			this.dispatchEvent(new createjs.ErrorEvent("XHR_SEND", null, error));
@@ -205,6 +218,11 @@ this.createjs = this.createjs || {};
 	};
 
 	p.setResponseType = function (type) {
+		// Some old browsers doesn't support blob, so we convert arraybuffer to blob after response is downloaded
+		if (type === 'blob') {
+			type = window.URL ? 'blob' : 'arraybuffer';
+			this._responseType = type;
+		}
 		this._request.responseType = type;
 	};
 
@@ -310,6 +328,9 @@ this.createjs = this.createjs || {};
 	/**
 	 * The XHR request has completed. This is called by the XHR request directly, or by a readyStateChange that has
 	 * <code>request.readyState == 4</code>. Only the first call to this method will be processed.
+	 *
+	 * Note that This method uses {{#crossLink "_checkError"}}{{/crossLink}} to determine if the server has returned an
+	 * error code.
 	 * @method _handleLoad
 	 * @param {Object} event The XHR load event.
 	 * @private
@@ -327,6 +348,21 @@ this.createjs = this.createjs || {};
 		}
 
 		this._response = this._getResponse();
+		// Convert arraybuffer back to blob
+		if (this._responseType === 'arraybuffer') {
+			try {
+				this._response = new Blob([this._response]);
+			} catch (e) {
+				// Fallback to use BlobBuilder if Blob constructor is not supported
+				// Tested on Android 2.3 ~ 4.2 and iOS5 safari
+				window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
+				if (e.name === 'TypeError' && window.BlobBuilder) {
+					var builder = new BlobBuilder();
+					builder.append(this._response);
+					this._response = builder.getBlob();
+				}
+			}
+		}
 		this._clean();
 
 		this.dispatchEvent(new createjs.Event("complete"));
@@ -341,29 +377,35 @@ this.createjs = this.createjs || {};
 	 */
 	p._handleTimeout = function (event) {
 		this._clean();
-
 		this.dispatchEvent(new createjs.ErrorEvent("PRELOAD_TIMEOUT", null, event));
 	};
 
 // Protected
 	/**
-	 * Determine if there is an error in the current load. This checks the status of the request for problem codes. Note
-	 * that this does not check for an actual response. Currently, it only checks for 404 or 0 error code.
+	 * Determine if there is an error in the current load.
+	 * Currently this checks the status of the request for problem codes, and not actual response content:
+	 * <ul>
+	 *     <li>Status codes between 400 and 599 (HTTP error range)</li>
+	 *     <li>A status of 0, but *only when the application is running on a server*. If the application is running
+	 *     on `file:`, then it may incorrectly treat an error on local (or embedded applications) as a successful
+	 *     load.</li>
+	 * </ul>
 	 * @method _checkError
-	 * @return {int} If the request status returns an error code.
+	 * @return {Error} An error with the status code in the `message` argument.
 	 * @private
 	 */
 	p._checkError = function () {
-		//LM: Probably need additional handlers here, maybe 501
 		var status = parseInt(this._request.status);
-
-		switch (status) {
-			case 404:   // Not Found
-			case 0:     // Not Loaded
-				return new Error(status);
+		if (status >= 400 && status <= 599) {
+			return new Error(status);
+		} else if (status == 0) {
+			if ((/^https?:/).test(location.protocol)) { return new Error(0); }
+			return null; // Likely an embedded app.
+		} else {
+			return null;
 		}
-		return null;
 	};
+
 
 	/**
 	 * Validate the response. Different browsers have different approaches, some of which throw errors when accessed
@@ -414,7 +456,7 @@ this.createjs = this.createjs || {};
 	 */
 	p._createXHR = function (item) {
 		// Check for cross-domain loads. We can't fully support them, but we can try.
-		var crossdomain = createjs.RequestUtils.isCrossDomain(item);
+		var crossdomain = createjs.URLUtils.isCrossDomain(item);
 		var headers = {};
 
 		// Create the request. Fallback to whatever support we have.
@@ -429,11 +471,19 @@ this.createjs = this.createjs || {};
 			for (var i = 0, l = s.ACTIVEX_VERSIONS.length; i < l; i++) {
 				var axVersion = s.ACTIVEX_VERSIONS[i];
 				try {
-					req = new ActiveXObject(axVersions);
+					req = new ActiveXObject(axVersion);
 					break;
-				} catch (e) {}
+				} catch (e) {
+				}
 			}
-			if (req == null) { return false; }
+			if (req == null) {
+				return false;
+			}
+		}
+
+		// Default to utf-8 for Text requests.
+		if (item.mimeType == null && createjs.RequestUtils.isText(item.type)) {
+			item.mimeType = "text/plain; charset=utf-8";
 		}
 
 		// IE9 doesn't support overrideMimeType(), so we need to check for it.
@@ -445,21 +495,21 @@ this.createjs = this.createjs || {};
 		this._xhrLevel = (typeof req.responseType === "string") ? 2 : 1;
 
 		var src = null;
-		if (item.method == createjs.AbstractLoader.GET) {
-			src = createjs.RequestUtils.buildPath(item.src, item.values);
+		if (item.method == createjs.Methods.GET) {
+			src = createjs.URLUtils.buildURI(item.src, item.values);
 		} else {
 			src = item.src;
 		}
 
 		// Open the request.  Set cross-domain flags if it is supported (XHR level 1 only)
-		req.open(item.method || createjs.AbstractLoader.GET, src, true);
+		req.open(item.method || createjs.Methods.GET, src, true);
 
 		if (crossdomain && req instanceof XMLHttpRequest && this._xhrLevel == 1) {
 			headers["Origin"] = location.origin;
 		}
 
 		// To send data we need to set the Content-type header)
-		if (item.values && item.method == createjs.AbstractLoader.POST) {
+		if (item.values && item.method == createjs.Methods.POST) {
 			headers["Content-Type"] = "application/x-www-form-urlencoded";
 		}
 
@@ -494,13 +544,23 @@ this.createjs = this.createjs || {};
 	p._clean = function () {
 		clearTimeout(this._loadTimeout);
 
-		this._request.removeEventListener("loadstart", this._handleLoadStartProxy);
-		this._request.removeEventListener("progress", this._handleProgressProxy);
-		this._request.removeEventListener("abort", this._handleAbortProxy);
-		this._request.removeEventListener("error",this._handleErrorProxy);
-		this._request.removeEventListener("timeout", this._handleTimeoutProxy);
-		this._request.removeEventListener("load", this._handleLoadProxy);
-		this._request.removeEventListener("readystatechange", this._handleReadyStateChangeProxy);
+		if (this._request.removeEventListener != null) {
+			this._request.removeEventListener("loadstart", this._handleLoadStartProxy);
+			this._request.removeEventListener("progress", this._handleProgressProxy);
+			this._request.removeEventListener("abort", this._handleAbortProxy);
+			this._request.removeEventListener("error", this._handleErrorProxy);
+			this._request.removeEventListener("timeout", this._handleTimeoutProxy);
+			this._request.removeEventListener("load", this._handleLoadProxy);
+			this._request.removeEventListener("readystatechange", this._handleReadyStateChangeProxy);
+		} else {
+			this._request.onloadstart = null;
+			this._request.onprogress = null;
+			this._request.onabort = null;
+			this._request.onerror = null;
+			this._request.ontimeout = null;
+			this._request.onload = null;
+			this._request.onreadystatechange = null;
+		}
 	};
 
 	p.toString = function () {

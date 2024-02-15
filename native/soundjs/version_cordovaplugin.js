@@ -5,11 +5,11 @@ this.createjs = this.createjs || {};
 
 (function () {
 
-	var s = createjs.FlashAudioPlugin = createjs.FlashAudioPlugin || {};
+	var s = createjs.CordovaAudioPlugin = createjs.CordovaAudioPlugin || {};
 
 	/**
 	 * The version string for this release.
-	 * @for FlashAudioPlugin
+	 * @for CordovaAudioPlugin
 	 * @property version
 	 * @type String
 	 * @static
@@ -18,7 +18,7 @@ this.createjs = this.createjs || {};
 
 	/**
 	 * The build date for this release in UTC format.
-	 * @for FlashAudioPlugin
+	 * @for CordovaAudioPlugin
 	 * @property buildDate
 	 * @type String
 	 * @static
