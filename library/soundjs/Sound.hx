@@ -2,16 +2,7 @@ package soundjs;
 
 import soundjs.data.PlayPropsConfig;
 
-typedef SoundFileloadEvent =
-{
-	var target : Dynamic;
-	var type : String;
-	var src : String;
-	var id : String;
-	var data : Dynamic;
-}
-
-typedef SoundFileerrorEvent =
+typedef SoundFileEvent =
 {
 	var target : Dynamic;
 	var type : String;
@@ -379,7 +370,7 @@ extern class Sound
 	 *      createjs.Sound.registerSound("myAudioPath/mySound.ogg", "myID", 3);
 	 *      createjs.Sound.registerSound({ogg:"path1/mySound.ogg", mp3:"path2/mySoundNoExtension"}, "myID", 3);
 	 */
-	static function registerSound(src:Dynamic, ?id:String, ?data:Dynamic, basePath:String, ?defaultPlayProps:Dynamic) : Dynamic;
+	static function registerSound(src:Dynamic, ?id:String, ?data:Dynamic, ?basePath:String, ?defaultPlayProps:Dynamic) : Dynamic;
 	/**
 	 * Register an array of audio files for loading and future playback in Sound. It is recommended to register all
 	 * sounds that need to be played back in order to properly prepare and preload them. Sound does internal preloading
@@ -621,12 +612,12 @@ extern class Sound
 	 * This event is fired when a file finishes loading internally. This event is fired for each loaded sound,
 	 * so any handler methods should look up the <code>event.src</code> to handle a particular sound.
 	 */
-	static inline function addFileloadEventListener(handler:SoundFileloadEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("fileload", handler, useCapture);
-	static inline function removeFileloadEventListener(handler:SoundFileloadEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileload", handler, useCapture);
+	static inline function addFileLoadEventListener(handler:SoundFileEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("fileload", handler, useCapture);
+	static inline function removeFileLoadEventListener(handler:SoundFileEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileload", handler, useCapture);
 	/**
 	 * This event is fired when a file fails loading internally. This event is fired for each loaded sound,
 	 * so any handler methods should look up the <code>event.src</code> to handle a particular sound.
 	 */
-	static inline function addFileerrorEventListener(handler:SoundFileerrorEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("fileerror", handler, useCapture);
-	static inline function removeFileerrorEventListener(handler:SoundFileerrorEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileerror", handler, useCapture);
+	static inline function addFileErrorEventListener(handler:SoundFileEvent->Void, ?useCapture:Bool) : Dynamic return addEventListener("fileerror", handler, useCapture);
+	static inline function removeFileErrorEventListener(handler:SoundFileEvent->Void, ?useCapture:Bool) : Void removeEventListener("fileerror", handler, useCapture);
 }
